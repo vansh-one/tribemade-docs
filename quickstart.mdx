@@ -1,80 +1,221 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Get your API key and make your first request in under 5 minutes"
 ---
 
-## Get started in three steps
+## Get started with TribeMade API
 
-Get your documentation site running locally and make your first customization.
+Follow these simple steps to start integrating with TribeMade's API.
 
-### Step 1: Set up your local environment
+### Step 1: Get your API key
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+<Steps>
+  <Step title="Log in to your dashboard">
+    Go to [TribeMade Dashboard](https://tribemade.in/dashboard) and select your store.
+  </Step>
+  <Step title="Navigate to Developer section">
+    In the sidebar, click on **Developer** (below Settings).
+  </Step>
+  <Step title="Generate API key">
+    Click the **"Generate API Key"** button. Your API key will be displayed immediately.
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    <Warning>
+      Store your API key securely! Anyone with your API key can manage your products and orders.
+    </Warning>
+  </Step>
+</Steps>
 
-### Step 2: Deploy your changes
+Your API key format looks like this: `tb-xxxx-xxx-xxxx`
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+### Step 2: Make your first request
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+Let's fetch an order to verify your API key works correctly.
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+<CodeGroup>
 
-### Step 3: Go live
+```bash cURL
+curl https://api.tribemade.in/api/orders/YOUR_ORDER_ID \
+  -H "X-API-Key: tb-a1b2-c3d-e4f5"
+```
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+```python Python
+import requests
+
+headers = {
+    "X-API-Key": "tb-a1b2-c3d-e4f5"
+}
+
+response = requests.get(
+    "https://api.tribemade.in/api/orders/YOUR_ORDER_ID",
+    headers=headers
+)
+
+print(response.json())
+```
+
+```javascript Node.js
+const fetch = require('node-fetch');
+
+const headers = {
+    'X-API-Key': 'tb-a1b2-c3d-e4f5'
+};
+
+fetch('https://api.tribemade.in/api/orders/YOUR_ORDER_ID', {
+    method: 'GET',
+    headers: headers
+})
+.then(response => response.json())
+.then(data => console.log(data));
+```
+
+```php PHP
+<?php
+$ch = curl_init();
+
+curl_setopt($ch, CURLOPT_URL, 
+    'https://api.tribemade.in/api/orders/YOUR_ORDER_ID');
+curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+    'X-API-Key: tb-a1b2-c3d-e4f5'
+));
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+curl_close($ch);
+
+echo $response;
+?>
+```
+
+</CodeGroup>
+
+<Tip>
+  Replace `YOUR_ORDER_ID` with an actual order ID from your store, and `tb-a1b2-c3d-e4f5` with your real API key.
+</Tip>
+
+### Step 3: Create your first product
+
+Now let's create a product programmatically:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.tribemade.in/api/products/create \
+  -H "X-API-Key: tb-a1b2-c3d-e4f5" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Simple T-Shirt",
+    "price": 499,
+    "description": "Basic cotton t-shirt",
+    "stock": 50
+  }'
+```
+
+```python Python
+import requests
+
+headers = {
+    "X-API-Key": "tb-a1b2-c3d-e4f5",
+    "Content-Type": "application/json"
+}
+
+data = {
+    "name": "Simple T-Shirt",
+    "price": 499,
+    "description": "Basic cotton t-shirt",
+    "stock": 50
+}
+
+response = requests.post(
+    "https://api.tribemade.in/api/products/create",
+    headers=headers,
+    json=data
+)
+
+print(response.json())
+# Output: {"product_id": "660e8400-e29b-41d4-a716-446655440123"}
+```
+
+```javascript Node.js
+const fetch = require('node-fetch');
+
+const headers = {
+    'X-API-Key': 'tb-a1b2-c3d-e4f5',
+    'Content-Type': 'application/json'
+};
+
+const data = {
+    name: 'Simple T-Shirt',
+    price: 499,
+    description: 'Basic cotton t-shirt',
+    stock: 50
+};
+
+fetch('https://api.tribemade.in/api/products/create', {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify(data)
+})
+.then(response => response.json())
+.then(data => console.log(data));
+// Output: {"product_id": "660e8400-e29b-41d4-a716-446655440123"}
+```
+
+</CodeGroup>
+
+<Check>
+  **Success!** You've created your first product via the API. The response includes the `product_id` you can use to update or delete the product later.
+</Check>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card
+    title="Authentication"
+    icon="shield-halved"
+    href="/api-reference/authentication"
+  >
+    Learn about API key security and best practices
+  </Card>
+  <Card
+    title="Product APIs"
+    icon="box"
+    href="/api-reference/products/create"
+  >
+    Explore all product management endpoints
+  </Card>
+  <Card
+    title="Order APIs"
+    icon="truck"
+    href="/api-reference/orders/get-details"
+  >
+    Learn how to fetch and update orders
+  </Card>
+  <Card
+    title="Webhooks"
+    icon="bell"
+    href="/api-reference/webhooks"
+  >
+    Set up real-time order notifications
+  </Card>
 </CardGroup>
 
+## Common use cases
+
+<AccordionGroup>
+  <Accordion icon="upload" title="Bulk product import">
+    Import products from your existing inventory system by looping through your data and calling the Create Product API for each item.
+  </Accordion>
+  <Accordion icon="sync" title="Inventory sync">
+    Keep stock levels synchronized between TribeMade and your warehouse system by periodically updating product stock via the Edit Product API.
+  </Accordion>
+  <Accordion icon="truck-fast" title="Automated shipping">
+    When you receive an order webhook, automatically create a shipping label with your courier and update the order status with tracking information.
+  </Accordion>
+  <Accordion icon="chart-line" title="Analytics integration">
+    Pull order data programmatically and feed it into your analytics dashboard for custom reporting.
+  </Accordion>
+</AccordionGroup>
+
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  **Need help?** Contact support through your [TribeMade Dashboard](https://tribemade.in/dashboard) or check out the complete API reference.
 </Note>

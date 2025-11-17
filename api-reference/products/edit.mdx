@@ -1,0 +1,602 @@
+---
+title: "Edit Product"
+api: "PUT /api/products/{product_id}/edit"
+description: "Update an existing product's details"
+icon: "pen-to-square"
+---
+
+## Overview
+
+Update an existing product's details. All fields are optional - only include fields you want to change. The same validation rules from Create Product apply.
+
+<Info>
+  **Rate Limit:** 20 requests per minute
+</Info>
+
+## Endpoint
+
+```
+PUT https://api.tribemade.in/api/products/{product_id}/edit
+```
+
+## Path Parameters
+
+<ParamField path="product_id" type="string" required>
+  UUID of the product to edit
+</ParamField>
+
+## Authentication
+
+<ParamField header="X-API-Key" type="string" required>
+  Your TribeMade API key (format: `tb-xxxx-xxx-xxxx`)
+</ParamField>
+
+## Request Body
+
+All fields from [Create Product](/api-reference/products/create) can be updated. Include only the fields you want to change.
+
+<ParamField body="name" type="string">
+  Product name (3-30 characters)
+</ParamField>
+
+<ParamField body="price" type="number">
+  Original/MRP price in INR (must be > 0)
+</ParamField>
+
+<ParamField body="current_price" type="number">
+  Sale price in INR (must be >= 0)
+</ParamField>
+
+<ParamField body="description" type="string">
+  Detailed product description (0-500 characters)
+</ParamField>
+
+<ParamField body="short_description" type="string">
+  Short description (0-50 characters)
+</ParamField>
+
+<ParamField body="stock" type="integer">
+  Available quantity (must be >= 0)
+</ParamField>
+
+<ParamField body="shipping_cost" type="number">
+  Shipping cost in INR (must be >= 0)
+</ParamField>
+
+<ParamField body="primary_image" type="string">
+  Primary product image URL or base64 (max 5MB)
+</ParamField>
+
+<ParamField body="images" type="array">
+  Additional images (max 10, each max 5MB)
+</ParamField>
+
+<ParamField body="variations" type="array">
+  Product variations (max 20 items)
+</ParamField>
+
+<ParamField body="size" type="array">
+  Available sizes (max 20 items)
+</ParamField>
+
+<ParamField body="colors" type="array">
+  Available colors (max 20 items)
+</ParamField>
+
+<ParamField body="categories" type="array">
+  Product categories (max 20, must exist in store)
+</ParamField>
+
+<ParamField body="is_sale" type="boolean">
+  Mark product as on sale
+</ParamField>
+
+<ParamField body="is_active" type="boolean">
+  Product visibility to customers
+</ParamField>
+
+<ParamField body="custom_questions" type="array">
+  Custom questions (max 5)
+</ParamField>
+
+<ParamField body="internal_note" type="string">
+  Private seller notes (0-500 characters)
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Custom key-value pairs
+</ParamField>
+
+## Response
+
+<ResponseField name="message" type="string">
+  Success message: "Product updated successfully"
+</ResponseField>
+
+## Examples
+
+### Update Price and Stock
+
+<CodeGroup>
+
+```bash cURL
+curl -X PUT https://api.tribemade.in/api/products/660e8400-e29b-41d4-a716-446655440123/edit \
+  -H "X-API-Key: tb-a1b2-c3d-e4f5" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "current_price": 799,
+    "stock": 200,
+    "is_sale": true
+  }'
+```
+
+```python Python
+import requests
+
+product_id = "660e8400-e29b-41d4-a716-446655440123"
+url = f"https://api.tribemade.in/api/products/{product_id}/edit"
+headers = {
+    "X-API-Key": "tb-a1b2-c3d-e4f5",
+    "Content-Type": "application/json"
+}
+
+data = {
+    "current_price": 799,
+    "stock": 200,
+    "is_sale": True
+}
+
+response = requests.put(url, headers=headers, json=data)
+print(response.json())
+# Output: {"message": "Product updated successfully"}
+```
+
+```javascript Node.js
+const fetch = require('node-fetch');
+
+const productId = '660e8400-e29b-41d4-a716-446655440123';
+const url = `https://api.tribemade.in/api/products/${productId}/edit`;
+const headers = {
+    'X-API-Key': 'tb-a1b2-c3d-e4f5',
+    'Content-Type': 'application/json'
+};
+
+const data = {
+    current_price: 799,
+    stock: 200,
+    is_sale: true
+};
+
+fetch(url, {
+    method: 'PUT',
+    headers: headers,
+    body: JSON.stringify(data)
+})
+.then(response => response.json())
+.then(data => console.log(data));
+// Output: {"message": "Product updated successfully"}
+```
+
+```php PHP
+<?php
+$product_id = '660e8400-e29b-41d4-a716-446655440123';
+$url = "https://api.tribemade.in/api/products/{$product_id}/edit";
+$headers = array(
+    'X-API-Key: tb-a1b2-c3d-e4f5',
+    'Content-Type: application/json'
+);
+
+$data = array(
+    'current_price' => 799,
+    'stock' => 200,
+    'is_sale' => true
+);
+
+$ch = curl_init($url);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+curl_close($ch);
+
+echo $response;
+// Output: {"message": "Product updated successfully"}
+?>
+```
+
+</CodeGroup>
+
+### Success Response
+
+<CodeGroup>
+
+```json 200 OK
+{
+  "message": "Product updated successfully"
+}
+```
+
+</CodeGroup>
+
+### Update Multiple Fields
+
+Update description, add internal notes, and update stock:
+
+<CodeGroup>
+
+```json Request Body
+{
+  "description": "Updated high-quality 100% cotton t-shirt with improved fabric",
+  "stock": 150,
+  "internal_note": "Supplier: ABC Corp, Cost: ₹550 (increased), Reorder at 20 units",
+  "metadata": {
+    "material": "100% Organic Cotton",
+    "care": "Machine wash cold, tumble dry low"
+  }
+}
+```
+
+```python Python
+import requests
+
+product_id = "660e8400-e29b-41d4-a716-446655440123"
+url = f"https://api.tribemade.in/api/products/{product_id}/edit"
+headers = {
+    "X-API-Key": "tb-a1b2-c3d-e4f5",
+    "Content-Type": "application/json"
+}
+
+data = {
+    "description": "Updated high-quality 100% cotton t-shirt",
+    "stock": 150,
+    "internal_note": "Supplier: ABC Corp, Cost: ₹550, Reorder at 20",
+    "metadata": {
+        "material": "100% Organic Cotton",
+        "care": "Machine wash cold"
+    }
+}
+
+response = requests.put(url, headers=headers, json=data)
+print(response.json())
+```
+
+</CodeGroup>
+
+### Disable Product
+
+Temporarily hide a product from customers:
+
+<CodeGroup>
+
+```bash cURL
+curl -X PUT https://api.tribemade.in/api/products/660e8400-e29b-41d4-a716-446655440123/edit \
+  -H "X-API-Key: tb-a1b2-c3d-e4f5" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "is_active": false,
+    "internal_note": "Out of stock from supplier. Expected restock: Dec 15"
+  }'
+```
+
+```python Python
+data = {
+    "is_active": False,
+    "internal_note": "Out of stock from supplier. Expected restock: Dec 15"
+}
+
+response = requests.put(url, headers=headers, json=data)
+```
+
+</CodeGroup>
+
+### Update Images and Categories
+
+<CodeGroup>
+
+```json Request Body
+{
+  "primary_image": "https://cdn.example.com/new-primary-image.jpg",
+  "images": [
+    "https://cdn.example.com/image-1.jpg",
+    "https://cdn.example.com/image-2.jpg",
+    "https://cdn.example.com/image-3.jpg"
+  ],
+  "categories": ["Fashion", "Men's Wear", "New Arrivals"]
+}
+```
+
+</CodeGroup>
+
+<Warning>
+  Categories must be created in your store first. Use exact category names (case-sensitive).
+</Warning>
+
+## Error Responses
+
+### 400 Bad Request - No Fields to Update
+
+```json
+{
+  "error": "No valid fields to update"
+}
+```
+
+**Cause:** The request body is empty or contains no valid fields.
+
+**Fix:** Include at least one field to update.
+
+### 400 Bad Request - Validation Errors
+
+All validation errors from [Create Product](/api-reference/products/create) apply:
+
+- Invalid name length
+- Invalid price (must be > 0)
+- Invalid description length
+- Invalid stock (must be >= 0)
+- Too many images/variations/sizes/colors/categories
+- Invalid categories
+- Image too large
+- Invalid custom question types
+
+See [Create Product Errors](/api-reference/products/create#error-responses) for details.
+
+### 404 Not Found
+
+```json
+{
+  "error": "Product not found or does not belong to this store"
+}
+```
+
+**Causes:**
+- Product ID doesn't exist
+- Product belongs to a different store
+- Product was deleted
+
+**Fix:** Verify the product ID and ensure it belongs to your store.
+
+### 401 Unauthorized
+
+```json
+{
+  "error": "Invalid API key"
+}
+```
+
+or
+
+```json
+{
+  "error": "Missing API key"
+}
+```
+
+### 429 Too Many Requests
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "retry_after": 60
+}
+```
+
+## Common Use Cases
+
+### Inventory Sync
+
+Keep stock levels synchronized with your warehouse system:
+
+```python
+import requests
+
+def sync_inventory(products_to_update):
+    """
+    Sync inventory from warehouse system to TribeMade
+    
+    products_to_update: [{"id": "product_id", "stock": 50}, ...]
+    """
+    url_base = "https://api.tribemade.in/api/products"
+    headers = {
+        "X-API-Key": "tb-a1b2-c3d-e4f5",
+        "Content-Type": "application/json"
+    }
+    
+    for product in products_to_update:
+        url = f"{url_base}/{product['id']}/edit"
+        data = {"stock": product['stock']}
+        
+        try:
+            response = requests.put(url, headers=headers, json=data)
+            if response.status_code == 200:
+                print(f"✓ Updated {product['id']}: stock = {product['stock']}")
+            else:
+                print(f"✗ Failed {product['id']}: {response.json()['error']}")
+        except Exception as e:
+            print(f"✗ Error {product['id']}: {str(e)}")
+
+# Example usage
+products_to_update = [
+    {"id": "660e8400-e29b-41d4-a716-446655440123", "stock": 45},
+    {"id": "770e8400-e29b-41d4-a716-446655440124", "stock": 32},
+    {"id": "880e8400-e29b-41d4-a716-446655440125", "stock": 78}
+]
+
+sync_inventory(products_to_update)
+```
+
+### Flash Sale
+
+Run a flash sale by updating prices:
+
+```python
+import requests
+import time
+
+def start_flash_sale(product_ids, discount_percent):
+    """
+    Apply discount to multiple products for a flash sale
+    """
+    url_base = "https://api.tribemade.in/api/products"
+    headers = {
+        "X-API-Key": "tb-a1b2-c3d-e4f5",
+        "Content-Type": "application/json"
+    }
+    
+    for product_id in product_ids:
+        url = f"{url_base}/{product_id}/edit"
+        
+        # First, get current price (assume you have it stored)
+        # For demo, we'll use a fixed price
+        original_price = 1000
+        sale_price = original_price * (1 - discount_percent / 100)
+        
+        data = {
+            "current_price": sale_price,
+            "is_sale": True,
+            "internal_note": f"Flash sale: {discount_percent}% off until end of day"
+        }
+        
+        response = requests.put(url, headers=headers, json=data)
+        print(f"Applied {discount_percent}% discount to {product_id}")
+        
+        # Respect rate limits
+        time.sleep(3)  # ~20 requests per minute
+
+# Start 30% off flash sale
+product_ids = ["660e8400-...", "770e8400-...", "880e8400-..."]
+start_flash_sale(product_ids, discount_percent=30)
+```
+
+### Bulk Status Update
+
+Activate or deactivate multiple products:
+
+```python
+import requests
+import time
+
+def bulk_update_status(product_ids, is_active):
+    """
+    Activate or deactivate multiple products
+    """
+    url_base = "https://api.tribemade.in/api/products"
+    headers = {
+        "X-API-Key": "tb-a1b2-c3d-e4f5",
+        "Content-Type": "application/json"
+    }
+    
+    status_text = "activated" if is_active else "deactivated"
+    
+    for product_id in product_ids:
+        url = f"{url_base}/{product_id}/edit"
+        data = {"is_active": is_active}
+        
+        try:
+            response = requests.put(url, headers=headers, json=data)
+            if response.status_code == 200:
+                print(f"✓ Product {product_id} {status_text}")
+            else:
+                print(f"✗ Failed to update {product_id}")
+        except Exception as e:
+            print(f"✗ Error: {str(e)}")
+        
+        time.sleep(3)
+
+# Deactivate out-of-season products
+winter_products = ["660e8400-...", "770e8400-..."]
+bulk_update_status(winter_products, is_active=False)
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion icon="check-double" title="Update only what changed">
+    Only include fields that need to be updated. Don't send the entire product object:
+    
+    **✅ Good:**
+    ```json
+    {
+      "stock": 200,
+      "current_price": 799
+    }
+    ```
+    
+    **❌ Bad:**
+    ```json
+    {
+      "name": "Same Name",
+      "price": 1299,
+      "description": "Same description...",
+      "stock": 200,
+      "current_price": 799,
+      // ... all other unchanged fields
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="rotate" title="Sync inventory regularly">
+    Set up automated inventory sync to keep stock levels accurate:
+    - Run sync every 15-30 minutes for high-traffic stores
+    - Use webhooks to get notified of orders and update stock accordingly
+    - Log sync operations for debugging
+  </Accordion>
+  
+  <Accordion icon="clock" title="Schedule price updates">
+    For sales and promotions:
+    - Update prices at specific times (e.g., midnight for daily deals)
+    - Store original prices before sales to restore later
+    - Use `internal_note` to track sale end dates
+  </Accordion>
+  
+  <Accordion icon="gauge" title="Batch updates efficiently">
+    For bulk updates:
+    - Process in batches of 15-18 products per minute
+    - Add 3-4 second delays between requests
+    - Implement retry logic for failed updates
+    - Log all operations for tracking
+  </Accordion>
+  
+  <Accordion icon="eye-slash" title="Use is_active for temporary removal">
+    Instead of deleting products, use `is_active: false` to temporarily hide them:
+    - Preserves product data and history
+    - Can be reactivated anytime
+    - Maintains order references
+    - Useful for seasonal products
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Create Product"
+    icon="plus"
+    href="/api-reference/products/create"
+  >
+    Learn how to create new products
+  </Card>
+  <Card
+    title="Delete Product"
+    icon="trash"
+    href="/api-reference/products/delete"
+  >
+    Remove products from your store
+  </Card>
+  <Card
+    title="Order APIs"
+    icon="truck"
+    href="/api-reference/orders/get-details"
+  >
+    Manage orders programmatically
+  </Card>
+  <Card
+    title="Rate Limits"
+    icon="gauge-high"
+    href="/api-reference/rate-limits"
+  >
+    Understand API rate limits
+  </Card>
+</CardGroup>
+

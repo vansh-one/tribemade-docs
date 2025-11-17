@@ -1,68 +1,57 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "TribeMade API",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#FF6B35",
+    "light": "#FF8C61",
+    "dark": "#E55A2B"
   },
   "favicon": "/favicon.svg",
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Getting Started",
             "pages": [
               "index",
-              "quickstart",
-              "development"
+              "quickstart"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Core Concepts",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "api-reference/authentication",
+              "api-reference/rate-limits",
+              "api-reference/errors"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Product APIs",
             "pages": [
-              "api-reference/introduction"
+              "api-reference/products/create",
+              "api-reference/products/edit",
+              "api-reference/products/delete"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Order APIs",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/orders/get-details",
+              "api-reference/orders/update-status"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "api-reference/webhooks"
             ]
           }
         ]
@@ -71,33 +60,33 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
+          "anchor": "Dashboard",
+          "href": "https://tribemade.in/dashboard",
+          "icon": "grid-2"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "Support",
+          "href": "https://tribemade.in/dashboard",
+          "icon": "life-ring"
         }
       ]
     }
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/light.png",
+    "dark": "/logo/dark.png"
   },
   "navbar": {
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "https://tribemade.in/dashboard"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "href": "https://tribemade.in/dashboard"
     }
   },
   "contextual": {
@@ -114,9 +103,9 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://tribemade.in",
+      "github": "https://tribemade.in",
+      "linkedin": "https://tribemade.in"
     }
   }
 }

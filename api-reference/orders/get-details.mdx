@@ -1,0 +1,638 @@
+---
+title: "Get Order Details"
+api: "GET /api/orders/{order_id}"
+description: "Retrieve complete details of an order"
+icon: "magnifying-glass"
+---
+
+## Overview
+
+Retrieve complete details of an order including customer information, order status, product details, and more. Use this endpoint to fetch order data for processing, analytics, or integration with other systems.
+
+<Info>
+  **Rate Limit:** 50 requests per minute
+</Info>
+
+## Endpoint
+
+```
+GET https://api.tribemade.in/api/orders/{order_id}
+```
+
+## Path Parameters
+
+<ParamField path="order_id" type="string" required>
+  UUID of the order to retrieve
+</ParamField>
+
+## Authentication
+
+<ParamField header="X-API-Key" type="string" required>
+  Your TribeMade API key (format: `tb-xxxx-xxx-xxxx`)
+</ParamField>
+
+## Response Fields
+
+### Always Present
+
+<ResponseField name="id" type="string">
+  Order unique identifier (UUID)
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  Order creation timestamp (ISO 8601 format, UTC)
+</ResponseField>
+
+<ResponseField name="product_id" type="string">
+  Associated product UUID
+</ResponseField>
+
+<ResponseField name="product_name" type="string">
+  Product name at time of order
+</ResponseField>
+
+<ResponseField name="product_image" type="string">
+  Product main image URL
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current order status: `started`, `processing`, `dispatched`, `cancelled`, or `delivered`
+</ResponseField>
+
+<ResponseField name="customer" type="object">
+  Customer information object
+  <Expandable title="properties">
+    <ResponseField name="name" type="string">
+      Customer full name
+    </ResponseField>
+    <ResponseField name="email" type="string">
+      Customer email address
+    </ResponseField>
+    <ResponseField name="number" type="string">
+      Customer phone number
+    </ResponseField>
+    <ResponseField name="full_address" type="object">
+      Complete address structure (may be null)
+      <Expandable title="properties">
+        <ResponseField name="line1" type="string">
+          Address line 1
+        </ResponseField>
+        <ResponseField name="line2" type="string">
+          Address line 2 (optional)
+        </ResponseField>
+        <ResponseField name="city" type="string">
+          City name
+        </ResponseField>
+        <ResponseField name="state" type="string">
+          State name
+        </ResponseField>
+        <ResponseField name="country" type="string">
+          Country name
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="pincode" type="string">
+      Delivery pincode
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="order_details" type="object">
+  Order details object
+  <Expandable title="properties">
+    <ResponseField name="quantity" type="integer">
+      Quantity ordered
+    </ResponseField>
+    <ResponseField name="amount" type="number">
+      Total amount paid in INR
+    </ResponseField>
+    <ResponseField name="variation" type="string | null">
+      Selected product variation (null if not applicable)
+    </ResponseField>
+    <ResponseField name="size" type="string | null">
+      Selected size (null if not applicable)
+    </ResponseField>
+    <ResponseField name="color" type="string | null">
+      Selected color (null if not applicable)
+    </ResponseField>
+    <ResponseField name="special_instructions" type="string | null">
+      Customer instructions (null if none provided)
+    </ResponseField>
+    <ResponseField name="custom_questions" type="array">
+      Answers to custom questions (empty array if none)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Conditional Fields
+
+<ResponseField name="rating" type="number | null">
+  Customer rating (1-5) if provided, null otherwise
+</ResponseField>
+
+<ResponseField name="review" type="string | null">
+  Customer review text if provided, null otherwise
+</ResponseField>
+
+<ResponseField name="tracking_url" type="string | null">
+  Shipment tracking URL if available, null otherwise
+</ResponseField>
+
+## Order Status Values
+
+| Status | Description | When Used |
+|--------|-------------|-----------|
+| `started` | Payment received, order created | Initial state after successful payment |
+| `processing` | Order being prepared/packed | When you start preparing the order |
+| `dispatched` | Order shipped to customer | When handed over to courier |
+| `delivered` | Order delivered successfully | When customer receives order |
+| `cancelled` | Order cancelled | When order is cancelled |
+
+## Examples
+
+### Basic Request
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.tribemade.in/api/orders/770e8400-e29b-41d4-a716-446655440789 \
+  -H "X-API-Key: tb-a1b2-c3d-e4f5"
+```
+
+```python Python
+import requests
+
+order_id = "770e8400-e29b-41d4-a716-446655440789"
+url = f"https://api.tribemade.in/api/orders/{order_id}"
+headers = {
+    "X-API-Key": "tb-a1b2-c3d-e4f5"
+}
+
+response = requests.get(url, headers=headers)
+order = response.json()
+print(order)
+```
+
+```javascript Node.js
+const fetch = require('node-fetch');
+
+const orderId = '770e8400-e29b-41d4-a716-446655440789';
+const url = `https://api.tribemade.in/api/orders/${orderId}`;
+const headers = {
+    'X-API-Key': 'tb-a1b2-c3d-e4f5'
+};
+
+fetch(url, { headers })
+    .then(response => response.json())
+    .then(order => console.log(order));
+```
+
+```php PHP
+<?php
+$order_id = '770e8400-e29b-41d4-a716-446655440789';
+$url = "https://api.tribemade.in/api/orders/{$order_id}";
+$headers = array(
+    'X-API-Key: tb-a1b2-c3d-e4f5'
+);
+
+$ch = curl_init($url);
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+curl_close($ch);
+
+$order = json_decode($response, true);
+print_r($order);
+?>
+```
+
+</CodeGroup>
+
+### Success Response
+
+<CodeGroup>
+
+```json 200 OK
+{
+  "id": "770e8400-e29b-41d4-a716-446655440789",
+  "created_at": "2024-11-16T10:30:00.000000Z",
+  "product_id": "660e8400-e29b-41d4-a716-446655440123",
+  "product_name": "Premium Cotton T-Shirt",
+  "product_image": "https://cdn.example.com/products/tshirt-main.jpg",
+  "status": "dispatched",
+  "customer": {
+    "name": "Rahul Sharma",
+    "email": "rahul.sharma@example.com",
+    "number": "9876543210",
+    "full_address": {
+      "line1": "123, MG Road",
+      "line2": "Apartment 4B",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "country": "India"
+    },
+    "pincode": "400001"
+  },
+  "order_details": {
+    "variation": "Slim Fit",
+    "size": "L",
+    "color": "Navy Blue",
+    "quantity": 2,
+    "amount": 2048,
+    "special_instructions": "Please gift wrap",
+    "custom_questions": []
+  },
+  "rating": 4.5,
+  "review": "Excellent quality and fit!",
+  "tracking_url": "https://delhivery.com/track/DLVY123456"
+}
+```
+
+</CodeGroup>
+
+## Error Responses
+
+### 404 Not Found
+
+```json
+{
+  "error": "Order not found"
+}
+```
+
+**Cause:** Order ID doesn't exist in the system.
+
+### 403 Forbidden
+
+```json
+{
+  "error": "Order does not belong to this store"
+}
+```
+
+**Cause:** Order exists but belongs to a different store. Your API key can only access orders for your store.
+
+### 401 Unauthorized
+
+```json
+{
+  "error": "Missing API key"
+}
+```
+
+or
+
+```json
+{
+  "error": "Invalid API key"
+}
+```
+
+### 429 Too Many Requests
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "retry_after": 60
+}
+```
+
+## Common Use Cases
+
+### Process New Orders
+
+Fetch order details when you receive a webhook notification:
+
+```python
+import requests
+
+def process_order(order_id):
+    """
+    Fetch and process order details
+    """
+    url = f"https://api.tribemade.in/api/orders/{order_id}"
+    headers = {"X-API-Key": "tb-a1b2-c3d-e4f5"}
+    
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        order = response.json()
+        
+        # Extract key information
+        customer = order['customer']
+        order_details = order['order_details']
+        
+        print(f"Order ID: {order['id']}")
+        print(f"Customer: {customer['name']}")
+        print(f"Email: {customer['email']}")
+        print(f"Phone: {customer['number']}")
+        print(f"Address: {customer['full_address']['line1']}, {customer['full_address']['city']}")
+        print(f"Product: {order['product_name']}")
+        print(f"Quantity: {order_details['quantity']}")
+        print(f"Amount: ₹{order_details['amount']}")
+        
+        if order_details['size']:
+            print(f"Size: {order_details['size']}")
+        if order_details['color']:
+            print(f"Color: {order_details['color']}")
+        
+        return order
+    else:
+        print(f"Error: {response.json()['error']}")
+        return None
+
+# Usage (typically called from webhook handler)
+order = process_order("770e8400-e29b-41d4-a716-446655440789")
+```
+
+### Generate Packing Slip
+
+Create a packing slip with order information:
+
+```python
+import requests
+from datetime import datetime
+
+def generate_packing_slip(order_id):
+    """
+    Generate packing slip for order
+    """
+    url = f"https://api.tribemade.in/api/orders/{order_id}"
+    headers = {"X-API-Key": "tb-a1b2-c3d-e4f5"}
+    
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        order = response.json()
+        
+        # Format packing slip
+        slip = f"""
+        ═══════════════════════════════════════
+                    PACKING SLIP
+        ═══════════════════════════════════════
+        
+        Order ID: {order['id'][:8]}...
+        Date: {datetime.fromisoformat(order['created_at'].replace('Z', '+00:00')).strftime('%B %d, %Y')}
+        
+        CUSTOMER DETAILS:
+        ────────────────────────────────────────
+        Name: {order['customer']['name']}
+        Phone: {order['customer']['number']}
+        Email: {order['customer']['email']}
+        
+        DELIVERY ADDRESS:
+        ────────────────────────────────────────
+        {order['customer']['full_address']['line1']}
+        {order['customer']['full_address'].get('line2', '')}
+        {order['customer']['full_address']['city']}, {order['customer']['full_address']['state']}
+        PIN: {order['customer']['pincode']}
+        {order['customer']['full_address']['country']}
+        
+        ORDER DETAILS:
+        ────────────────────────────────────────
+        Product: {order['product_name']}
+        Quantity: {order['order_details']['quantity']}
+        """
+        
+        if order['order_details']['size']:
+            slip += f"Size: {order['order_details']['size']}\n        "
+        if order['order_details']['color']:
+            slip += f"Color: {order['order_details']['color']}\n        "
+        if order['order_details']['variation']:
+            slip += f"Variation: {order['order_details']['variation']}\n        "
+        
+        if order['order_details']['special_instructions']:
+            slip += f"""
+        SPECIAL INSTRUCTIONS:
+        ────────────────────────────────────────
+        {order['order_details']['special_instructions']}
+        """
+        
+        slip += f"""
+        ────────────────────────────────────────
+        Amount Paid: ₹{order['order_details']['amount']}
+        
+        ═══════════════════════════════════════
+        """
+        
+        print(slip)
+        return slip
+    
+    return None
+
+# Usage
+generate_packing_slip("770e8400-e29b-41d4-a716-446655440789")
+```
+
+### Integrate with Shipping Provider
+
+Automatically create shipping labels:
+
+```python
+import requests
+
+def create_shipping_label(order_id):
+    """
+    Fetch order and create shipping label with courier API
+    """
+    # Get order details
+    url = f"https://api.tribemade.in/api/orders/{order_id}"
+    headers = {"X-API-Key": "tb-a1b2-c3d-e4f5"}
+    
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code != 200:
+        print(f"Error fetching order: {response.json()['error']}")
+        return None
+    
+    order = response.json()
+    customer = order['customer']
+    address = customer['full_address']
+    
+    # Prepare shipping data
+    shipping_data = {
+        "order_id": order['id'],
+        "customer_name": customer['name'],
+        "customer_phone": customer['number'],
+        "address": {
+            "line1": address['line1'],
+            "line2": address.get('line2', ''),
+            "city": address['city'],
+            "state": address['state'],
+            "country": address['country'],
+            "pincode": customer['pincode']
+        },
+        "product_name": order['product_name'],
+        "quantity": order['order_details']['quantity'],
+        "amount": order['order_details']['amount']
+    }
+    
+    # Call your shipping provider API
+    # shipping_label = create_delhivery_shipment(shipping_data)
+    # tracking_url = shipping_label['tracking_url']
+    
+    # For demo:
+    print(f"Created shipping label for order {order['id'][:8]}...")
+    print(f"Shipping to: {customer['name']}, {address['city']}")
+    
+    return shipping_data
+
+# Usage
+create_shipping_label("770e8400-e29b-41d4-a716-446655440789")
+```
+
+### Export Orders for Analytics
+
+Fetch multiple orders for reporting:
+
+```python
+import requests
+import csv
+from datetime import datetime
+
+def export_orders_to_csv(order_ids, filename="orders_export.csv"):
+    """
+    Export multiple orders to CSV for analysis
+    """
+    url_base = "https://api.tribemade.in/api/orders"
+    headers = {"X-API-Key": "tb-a1b2-c3d-e4f5"}
+    
+    orders_data = []
+    
+    for order_id in order_ids:
+        url = f"{url_base}/{order_id}"
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code == 200:
+            order = response.json()
+            
+            orders_data.append({
+                "Order ID": order['id'][:13],
+                "Date": datetime.fromisoformat(order['created_at'].replace('Z', '+00:00')).strftime('%Y-%m-%d'),
+                "Customer": order['customer']['name'],
+                "City": order['customer']['full_address']['city'],
+                "State": order['customer']['full_address']['state'],
+                "Product": order['product_name'],
+                "Quantity": order['order_details']['quantity'],
+                "Amount": order['order_details']['amount'],
+                "Status": order['status'],
+                "Rating": order.get('rating', 'N/A')
+            })
+    
+    # Write to CSV
+    if orders_data:
+        with open(filename, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=orders_data[0].keys())
+            writer.writeheader()
+            writer.writerows(orders_data)
+        
+        print(f"✓ Exported {len(orders_data)} orders to {filename}")
+        return filename
+    
+    return None
+
+# Usage
+order_ids = ["770e8400-...", "880e8400-...", "990e8400-..."]
+export_orders_to_csv(order_ids)
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion icon="webhook" title="Use webhooks instead of polling">
+    Instead of repeatedly calling this endpoint to check for new orders, use [webhooks](/api-reference/webhooks) to receive real-time notifications:
+    
+    **❌ Bad: Polling for new orders**
+    ```python
+    while True:
+        check_for_new_orders()  # Wastes API calls
+        time.sleep(60)
+    ```
+    
+    **✅ Good: Webhook notifications**
+    ```python
+    @app.route('/webhook', methods=['POST'])
+    def handle_order():
+        order_data = request.json
+        order_id = order_data['order_id']
+        process_order(order_id)  # Fetch full details only when needed
+        return '', 200
+    ```
+  </Accordion>
+  
+  <Accordion icon="database" title="Cache order data">
+    Store order data locally to reduce API calls:
+    - Cache orders after first fetch
+    - Only re-fetch if data might have changed (status update)
+    - Use order ID as cache key
+  </Accordion>
+  
+  <Accordion icon="shield-check" title="Handle errors gracefully">
+    Always check for errors:
+    ```python
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        order = response.json()
+        # Process order
+    elif response.status_code == 404:
+        print("Order not found")
+    elif response.status_code == 403:
+        print("Order doesn't belong to your store")
+    else:
+        print(f"Error: {response.status_code}")
+    ```
+  </Accordion>
+  
+  <Accordion icon="circle-question" title="Check for null values">
+    Some fields may be null - always check before using:
+    ```python
+    order = response.json()
+    
+    # These fields may be null
+    if order['order_details']['size']:
+        print(f"Size: {order['order_details']['size']}")
+    
+    if order.get('tracking_url'):
+        print(f"Track: {order['tracking_url']}")
+    
+    if order.get('rating'):
+        print(f"Rating: {order['rating']}/5")
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Update Order Status"
+    icon="truck"
+    href="/api-reference/orders/update-status"
+  >
+    Update order status and add tracking information
+  </Card>
+  <Card
+    title="Webhooks"
+    icon="bell"
+    href="/api-reference/webhooks"
+  >
+    Receive real-time order notifications
+  </Card>
+  <Card
+    title="Product APIs"
+    icon="box"
+    href="/api-reference/products/create"
+  >
+    Manage your product catalog
+  </Card>
+  <Card
+    title="Rate Limits"
+    icon="gauge-high"
+    href="/api-reference/rate-limits"
+  >
+    Understand API rate limits
+  </Card>
+</CardGroup>
+

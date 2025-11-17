@@ -1,0 +1,769 @@
+---
+title: "Update Order Status"
+api: "PUT /api/orders/{order_id}/status"
+description: "Update the status of an order and provide tracking information"
+icon: "truck-fast"
+---
+
+## Overview
+
+Update the status of an order and optionally provide tracking information. Customer receives email notification for status changes.
+
+<Info>
+  **Rate Limit:** 20 requests per minute
+</Info>
+
+## Endpoint
+
+```
+PUT https://api.tribemade.in/api/orders/{order_id}/status
+```
+
+## Path Parameters
+
+<ParamField path="order_id" type="string" required>
+  UUID of the order to update
+</ParamField>
+
+## Authentication
+
+<ParamField header="X-API-Key" type="string" required>
+  Your TribeMade API key (format: `tb-xxxx-xxx-xxxx`)
+</ParamField>
+
+## Request Body
+
+<ParamField body="status" type="string" required>
+  New order status. Must be one of: `processing`, `dispatched`, `cancelled`, `delivered`
+</ParamField>
+
+<ParamField body="tracking_url" type="string">
+  Tracking URL for shipment (recommended for `dispatched` status)
+</ParamField>
+
+## Response
+
+<ResponseField name="message" type="string">
+  Success message: "Order status updated successfully"
+</ResponseField>
+
+## Order Status Flow
+
+```
+started → processing → dispatched → delivered
+            ↘ cancelled (from any status)
+```
+
+## Status Values
+
+### 🔵 processing
+
+<ParamField body="status" type="string" value="processing">
+  **When to use:** Start preparing/packing the order
+  
+  **Customer email:** "Your order is being prepared"
+  
+  **Tracking URL:** Not required
+  
+  **Timing:** Within 24 hours of order placement
+</ParamField>
+
+### 🟣 dispatched
+
+<ParamField body="status" type="string" value="dispatched">
+  **When to use:** Hand over to courier/shipping partner
+  
+  **Customer email:** "Your order has been shipped" with tracking link
+  
+  **Tracking URL:** Highly recommended
+  - Example: `https://delhivery.com/track/AWB12345`
+  - Example: `https://bluedart.com/tracking/AWB67890`
+  - Example: `https://indiapost.gov.in/track/REG123456`
+  
+  **Customer expects:** Delivery in 3-7 days
+</ParamField>
+
+### 🟢 delivered
+
+<ParamField body="status" type="string" value="delivered">
+  **When to use:** Customer confirms receipt or auto-marked by courier
+  
+  **Customer email:** "Your order has been delivered" with rating request
+  
+  **Status is final:** Cannot be changed after this
+  
+  **Customer action:** Can now rate and review the product
+</ParamField>
+
+### 🔴 cancelled
+
+<ParamField body="status" type="string" value="cancelled">
+  **When to use:** Out of stock, payment issue, customer request
+  
+  **Customer email:** "Your order has been cancelled"
+  
+  **Status is final:** Cannot be changed after this
+  
+  **Can cancel from:** Any status (started, processing, dispatched)
+  
+  **Important:** Handle refunds separately through payment gateway
+</ParamField>
+
+## Examples
+
+### Mark as Processing
+
+<CodeGroup>
+
+```bash cURL
+curl -X PUT https://api.tribemade.in/api/orders/770e8400-e29b-41d4-a716-446655440789/status \
+  -H "X-API-Key: tb-a1b2-c3d-e4f5" \
+  -H "Content-Type: application/json" \
+  -d '{ "status": "processing" }'
+```
+
+```python Python
+import requests
+
+order_id = "770e8400-e29b-41d4-a716-446655440789"
+url = f"https://api.tribemade.in/api/orders/{order_id}/status"
+headers = {
+    "X-API-Key": "tb-a1b2-c3d-e4f5",
+    "Content-Type": "application/json"
+}
+
+data = {"status": "processing"}
+
+response = requests.put(url, headers=headers, json=data)
+print(response.json())
+# Output: {"message": "Order status updated successfully"}
+```
+
+```javascript Node.js
+const fetch = require('node-fetch');
+
+const orderId = '770e8400-e29b-41d4-a716-446655440789';
+const url = `https://api.tribemade.in/api/orders/${orderId}/status`;
+const headers = {
+    'X-API-Key': 'tb-a1b2-c3d-e4f5',
+    'Content-Type': 'application/json'
+};
+
+const data = { status: 'processing' };
+
+fetch(url, {
+    method: 'PUT',
+    headers: headers,
+    body: JSON.stringify(data)
+})
+.then(response => response.json())
+.then(data => console.log(data));
+// Output: {"message": "Order status updated successfully"}
+```
+
+```php PHP
+<?php
+$order_id = '770e8400-e29b-41d4-a716-446655440789';
+$url = "https://api.tribemade.in/api/orders/{$order_id}/status";
+$headers = array(
+    'X-API-Key: tb-a1b2-c3d-e4f5',
+    'Content-Type: application/json'
+);
+
+$data = array('status' => 'processing');
+
+$ch = curl_init($url);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+curl_close($ch);
+
+echo $response;
+// Output: {"message": "Order status updated successfully"}
+?>
+```
+
+</CodeGroup>
+
+### Mark as Dispatched with Tracking
+
+<CodeGroup>
+
+```bash cURL
+curl -X PUT https://api.tribemade.in/api/orders/770e8400-e29b-41d4-a716-446655440789/status \
+  -H "X-API-Key: tb-a1b2-c3d-e4f5" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "dispatched",
+    "tracking_url": "https://delhivery.com/track/DLVY123456"
+  }'
+```
+
+```python Python
+import requests
+
+order_id = "770e8400-e29b-41d4-a716-446655440789"
+url = f"https://api.tribemade.in/api/orders/{order_id}/status"
+headers = {
+    "X-API-Key": "tb-a1b2-c3d-e4f5",
+    "Content-Type": "application/json"
+}
+
+data = {
+    "status": "dispatched",
+    "tracking_url": "https://delhivery.com/track/DLVY123456"
+}
+
+response = requests.put(url, headers=headers, json=data)
+print(response.json())
+```
+
+```javascript Node.js
+const data = {
+    status: 'dispatched',
+    tracking_url: 'https://delhivery.com/track/DLVY123456'
+};
+
+fetch(url, {
+    method: 'PUT',
+    headers: headers,
+    body: JSON.stringify(data)
+})
+.then(response => response.json())
+.then(data => console.log(data));
+```
+
+</CodeGroup>
+
+<Check>
+  **Customer receives:** "Order Shipped" email with tracking link
+</Check>
+
+### Mark as Delivered
+
+<CodeGroup>
+
+```bash cURL
+curl -X PUT https://api.tribemade.in/api/orders/770e8400-e29b-41d4-a716-446655440789/status \
+  -H "X-API-Key: tb-a1b2-c3d-e4f5" \
+  -H "Content-Type: application/json" \
+  -d '{ "status": "delivered" }'
+```
+
+```python Python
+data = {"status": "delivered"}
+response = requests.put(url, headers=headers, json=data)
+```
+
+</CodeGroup>
+
+<Check>
+  **Customer receives:** "Order Delivered" email with rating request
+</Check>
+
+### Cancel Order
+
+<CodeGroup>
+
+```bash cURL
+curl -X PUT https://api.tribemade.in/api/orders/770e8400-e29b-41d4-a716-446655440789/status \
+  -H "X-API-Key: tb-a1b2-c3d-e4f5" \
+  -H "Content-Type: application/json" \
+  -d '{ "status": "cancelled" }'
+```
+
+```python Python
+data = {"status": "cancelled"}
+response = requests.put(url, headers=headers, json=data)
+```
+
+</CodeGroup>
+
+<Check>
+  **Customer receives:** "Order Cancelled" email
+</Check>
+
+### Success Response
+
+<CodeGroup>
+
+```json 200 OK
+{
+  "message": "Order status updated successfully"
+}
+```
+
+</CodeGroup>
+
+## Error Responses
+
+### 400 Bad Request - Missing Status
+
+```json
+{
+  "error": "Status is required"
+}
+```
+
+**Cause:** The `status` field was not included in the request body.
+
+### 400 Bad Request - Invalid Status
+
+```json
+{
+  "error": "Status must be one of: processing, dispatched, cancelled, delivered"
+}
+```
+
+**Cause:** Invalid status value provided.
+
+**Valid statuses:** `processing`, `dispatched`, `cancelled`, `delivered`
+
+### 400 Bad Request - Order Already Completed
+
+```json
+{
+  "error": "Cannot update order status. Order is already delivered."
+}
+```
+
+**Cause:** Trying to update status of an order that's already in a final state (delivered or cancelled).
+
+**Note:** Once delivered or cancelled, status is permanent and cannot be changed.
+
+### 404 Not Found
+
+```json
+{
+  "error": "Order not found"
+}
+```
+
+**Cause:** Order ID doesn't exist.
+
+### 403 Forbidden
+
+```json
+{
+  "error": "Order does not belong to this store"
+}
+```
+
+**Cause:** Order exists but belongs to a different store.
+
+### 401 Unauthorized
+
+```json
+{
+  "error": "Invalid API key"
+}
+```
+
+or
+
+```json
+{
+  "error": "Missing API key"
+}
+```
+
+### 429 Too Many Requests
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "retry_after": 60
+}
+```
+
+## Tracking URL Guidelines
+
+### When to Provide
+
+- **Required:** When status = `dispatched`
+- **Optional:** Can be added/updated at any time
+- **Best practice:** Add immediately when shipping
+
+### Format & Examples
+
+<AccordionGroup>
+  <Accordion icon="truck" title="Delhivery">
+    ```
+    https://delhivery.com/track/AWBXXXXXXXX
+    ```
+    
+    Example: `https://delhivery.com/track/AWB123456789`
+  </Accordion>
+  
+  <Accordion icon="truck-fast" title="BlueDart">
+    ```
+    https://bluedart.com/tracking/AWBXXXXXXXX
+    ```
+    
+    Example: `https://bluedart.com/tracking/AWB987654321`
+  </Accordion>
+  
+  <Accordion icon="envelope" title="India Post">
+    ```
+    https://indiapost.gov.in/track/REGXXXXXXXX
+    ```
+    
+    Example: `https://indiapost.gov.in/track/REG123456IN`
+  </Accordion>
+  
+  <Accordion icon="plane" title="Other Couriers">
+    Any valid tracking URL from your shipping provider:
+    - FedEx, DHL, DTDC, etc.
+    - Must be a valid HTTPS URL
+    - Should provide real-time tracking
+  </Accordion>
+</AccordionGroup>
+
+### What Happens
+
+- URL is saved to database
+- Included in customer email notifications
+- Customer can click to track their shipment
+- Displayed on order status page
+
+## Common Use Cases
+
+### Automated Fulfillment Workflow
+
+```python
+import requests
+
+class OrderFulfillment:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.base_url = "https://api.tribemade.in/api/orders"
+    
+    def update_status(self, order_id, status, tracking_url=None):
+        """Update order status"""
+        url = f"{self.base_url}/{order_id}/status"
+        headers = {
+            "X-API-Key": self.api_key,
+            "Content-Type": "application/json"
+        }
+        
+        data = {"status": status}
+        if tracking_url:
+            data["tracking_url"] = tracking_url
+        
+        response = requests.put(url, headers=headers, json=data)
+        return response.status_code == 200
+    
+    def fulfill_order(self, order_id):
+        """Complete fulfillment workflow"""
+        print(f"Starting fulfillment for order {order_id[:8]}...")
+        
+        # Step 1: Mark as processing
+        if self.update_status(order_id, "processing"):
+            print("✓ Marked as processing")
+        else:
+            print("✗ Failed to mark as processing")
+            return False
+        
+        # Step 2: Pack and prepare (your logic here)
+        print("✓ Order packed and ready")
+        
+        # Step 3: Create shipping label (your shipping provider API)
+        tracking_url = self.create_shipping_label(order_id)
+        
+        # Step 4: Mark as dispatched with tracking
+        if self.update_status(order_id, "dispatched", tracking_url):
+            print(f"✓ Marked as dispatched with tracking: {tracking_url}")
+            return True
+        else:
+            print("✗ Failed to mark as dispatched")
+            return False
+    
+    def create_shipping_label(self, order_id):
+        """Create shipping label (mock implementation)"""
+        # Integrate with your shipping provider API
+        # Return tracking URL
+        return "https://delhivery.com/track/AWB123456"
+
+# Usage
+fulfillment = OrderFulfillment("tb-a1b2-c3d-e4f5")
+fulfillment.fulfill_order("770e8400-e29b-41d4-a716-446655440789")
+```
+
+### Webhook-Triggered Status Update
+
+```python
+from flask import Flask, request
+import requests
+
+app = Flask(__name__)
+
+@app.route('/webhook/orders', methods=['POST'])
+def handle_new_order():
+    """
+    Receive webhook notification and automatically mark as processing
+    """
+    data = request.get_json()
+    
+    if data.get('event') != 'order.created':
+        return '', 400
+    
+    order_id = data.get('order_id')
+    
+    # Automatically mark new orders as processing
+    url = f"https://api.tribemade.in/api/orders/{order_id}/status"
+    headers = {
+        "X-API-Key": "tb-a1b2-c3d-e4f5",
+        "Content-Type": "application/json"
+    }
+    data = {"status": "processing"}
+    
+    response = requests.put(url, headers=headers, json=data)
+    
+    if response.status_code == 200:
+        print(f"✓ Order {order_id[:8]}... marked as processing")
+    
+    return '', 200
+
+app.run(port=5000)
+```
+
+### Bulk Status Update
+
+```python
+import requests
+import time
+
+def bulk_update_status(order_ids, status, tracking_urls=None):
+    """
+    Update status for multiple orders
+    
+    order_ids: List of order IDs
+    status: New status
+    tracking_urls: Dict mapping order_id to tracking_url (optional)
+    """
+    base_url = "https://api.tribemade.in/api/orders"
+    headers = {
+        "X-API-Key": "tb-a1b2-c3d-e4f5",
+        "Content-Type": "application/json"
+    }
+    
+    results = {"success": [], "failed": []}
+    
+    for order_id in order_ids:
+        url = f"{base_url}/{order_id}/status"
+        data = {"status": status}
+        
+        # Add tracking URL if provided
+        if tracking_urls and order_id in tracking_urls:
+            data["tracking_url"] = tracking_urls[order_id]
+        
+        try:
+            response = requests.put(url, headers=headers, json=data)
+            
+            if response.status_code == 200:
+                results["success"].append(order_id)
+                print(f"✓ Updated {order_id[:8]}... to {status}")
+            else:
+                results["failed"].append(order_id)
+                error = response.json().get('error', 'Unknown error')
+                print(f"✗ Failed {order_id[:8]}...: {error}")
+        
+        except Exception as e:
+            results["failed"].append(order_id)
+            print(f"✗ Error {order_id[:8]}...: {str(e)}")
+        
+        # Respect rate limit (20 req/min)
+        time.sleep(3)
+    
+    print(f"\n✓ Success: {len(results['success'])}")
+    print(f"✗ Failed: {len(results['failed'])}")
+    
+    return results
+
+# Usage - Mark multiple orders as dispatched
+order_ids = ["770e8400-...", "880e8400-...", "990e8400-..."]
+tracking_urls = {
+    "770e8400-...": "https://delhivery.com/track/AWB111",
+    "880e8400-...": "https://delhivery.com/track/AWB222",
+    "990e8400-...": "https://delhivery.com/track/AWB333"
+}
+
+bulk_update_status(order_ids, "dispatched", tracking_urls)
+```
+
+### Integration with Shipping Provider
+
+```python
+import requests
+
+def ship_order_with_delhivery(order_id):
+    """
+    Complete workflow: Get order → Create shipment → Update status
+    """
+    api_key = "tb-a1b2-c3d-e4f5"
+    base_url = "https://api.tribemade.in/api/orders"
+    
+    # Step 1: Get order details
+    get_url = f"{base_url}/{order_id}"
+    headers = {"X-API-Key": api_key}
+    
+    response = requests.get(get_url, headers=headers)
+    if response.status_code != 200:
+        print("Failed to fetch order")
+        return False
+    
+    order = response.json()
+    customer = order['customer']
+    
+    # Step 2: Create Delhivery shipment (mock)
+    # In reality, you'd call Delhivery API here
+    delhivery_data = {
+        "order_id": order['id'],
+        "customer_name": customer['name'],
+        "phone": customer['number'],
+        "address": customer['full_address'],
+        "pincode": customer['pincode']
+    }
+    
+    # Mock response
+    tracking_awb = "AWB123456789"
+    tracking_url = f"https://delhivery.com/track/{tracking_awb}"
+    print(f"✓ Created Delhivery shipment: {tracking_awb}")
+    
+    # Step 3: Update order status with tracking
+    update_url = f"{base_url}/{order_id}/status"
+    headers["Content-Type"] = "application/json"
+    
+    data = {
+        "status": "dispatched",
+        "tracking_url": tracking_url
+    }
+    
+    response = requests.put(update_url, headers=headers, json=data)
+    
+    if response.status_code == 200:
+        print(f"✓ Order marked as dispatched with tracking")
+        print(f"  Tracking: {tracking_url}")
+        return True
+    else:
+        print("✗ Failed to update order status")
+        return False
+
+# Usage
+ship_order_with_delhivery("770e8400-e29b-41d4-a716-446655440789")
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion icon="list-check" title="Follow the status flow">
+    Follow the natural order of statuses:
+    
+    **✅ Good flow:**
+    ```
+    started → processing → dispatched → delivered
+    ```
+    
+    **❌ Don't skip steps:**
+    ```
+    started → delivered  (skip processing and dispatched)
+    ```
+  </Accordion>
+  
+  <Accordion icon="link" title="Always include tracking URL">
+    For `dispatched` status, always provide tracking URL:
+    
+    **✅ Good:**
+    ```python
+    {
+        "status": "dispatched",
+        "tracking_url": "https://delhivery.com/track/AWB123"
+    }
+    ```
+    
+    **❌ Bad:**
+    ```python
+    {
+        "status": "dispatched"
+        # Missing tracking_url - customer can't track shipment
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="clock" title="Update status promptly">
+    Update orders at each stage:
+    - Mark `processing` within 24 hours of order
+    - Mark `dispatched` same day as shipping
+    - Mark `delivered` based on courier confirmation
+    
+    Timely updates improve customer satisfaction.
+  </Accordion>
+  
+  <Accordion icon="ban" title="Handle final statuses carefully">
+    Remember that `delivered` and `cancelled` are final:
+    - Cannot be changed after setting
+    - Double-check before marking as delivered
+    - Ensure refunds are processed before cancelling
+  </Accordion>
+  
+  <Accordion icon="rotate" title="Implement retry logic">
+    Add retry logic for failed updates:
+    ```python
+    def update_with_retry(order_id, status, max_retries=3):
+        for attempt in range(max_retries):
+            try:
+                response = update_order_status(order_id, status)
+                if response.status_code == 200:
+                    return True
+                time.sleep(2 ** attempt)  # Exponential backoff
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    raise
+        return False
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Typical Order Timeline
+
+- **Day 0:** Order placed → `started`
+- **Day 0-1:** Preparation begins → `processing`
+- **Day 1-2:** Shipped out → `dispatched` (with tracking)
+- **Day 4-7:** Customer receives → `delivered`
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Get Order Details"
+    icon="magnifying-glass"
+    href="/api-reference/orders/get-details"
+  >
+    Fetch complete order information
+  </Card>
+  <Card
+    title="Webhooks"
+    icon="bell"
+    href="/api-reference/webhooks"
+  >
+    Receive real-time order notifications
+  </Card>
+  <Card
+    title="Product APIs"
+    icon="box"
+    href="/api-reference/products/create"
+  >
+    Manage your product catalog
+  </Card>
+  <Card
+    title="Rate Limits"
+    icon="gauge-high"
+    href="/api-reference/rate-limits"
+  >
+    Understand API rate limits
+  </Card>
+</CardGroup>
+

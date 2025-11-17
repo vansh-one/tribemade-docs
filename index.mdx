@@ -1,97 +1,122 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "TribeMade API Documentation"
+description: "Automate your store operations with powerful APIs for products, orders, and real-time webhooks"
 ---
 
-## Setting up
+## Welcome to TribeMade API
 
-Get your documentation site up and running in minutes.
+Build powerful integrations with TribeMade's REST API. Automate product management, process orders programmatically, and receive real-time notifications through webhooks.
 
 <Card
-  title="Start here"
+  title="Get started in 5 minutes"
   icon="rocket"
   href="/quickstart"
   horizontal
 >
-  Follow our three step quickstart guide.
+  Generate your API key and make your first request.
 </Card>
 
-## Make it yours
+## What can you build?
 
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
+<CardGroup cols={2}>
   <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
+    title="Product Management"
+    icon="box"
+    href="/api-reference/products/create"
   >
-    Edit your docs locally and preview them in real time.
+    Create, update, and delete products. Perfect for bulk imports from your inventory system.
   </Card>
   <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
+    title="Order Automation"
+    icon="truck"
+    href="/api-reference/orders/get-details"
   >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+    Fetch order details and update statuses. Integrate with shipping providers automatically.
   </Card>
   <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
+    title="Real-time Webhooks"
+    icon="bell"
+    href="/api-reference/webhooks"
   >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
-
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+    Get instant notifications when orders are placed. No polling required.
   </Card>
   <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
+    title="Simple Authentication"
+    icon="key"
+    href="/api-reference/authentication"
   >
-    Add sample code to demonstrate how to use your product.
+    Just add your API key to the header. No OAuth complexity.
+  </Card>
+</CardGroup>
+
+## Why use TribeMade API?
+
+<AccordionGroup>
+  <Accordion icon="plug" title="Easy Integration">
+    RESTful API with simple authentication. Just add your API key to the `X-API-Key` header and start making requests.
+  </Accordion>
+  <Accordion icon="wand-magic-sparkles" title="No Manual Work">
+    Automate product updates and order processing. Sync your inventory, manage bulk uploads, and update order statuses programmatically.
+  </Accordion>
+  <Accordion icon="bolt" title="Real-time Updates">
+    Webhooks notify you instantly when orders arrive. No need to constantly poll for new orders - we push data to you automatically.
+  </Accordion>
+  <Accordion icon="sliders" title="Complete Control">
+    Manage everything from your backend systems. Full CRUD operations for products and comprehensive order management.
+  </Accordion>
+</AccordionGroup>
+
+## Quick links
+
+<CardGroup cols={3}>
+  <Card
+    title="Authentication"
+    icon="shield-halved"
+    href="/api-reference/authentication"
+  >
+    Learn how to authenticate your API requests
   </Card>
   <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
+    title="Product APIs"
+    icon="cube"
+    href="/api-reference/products/create"
   >
-    Display images and other media.
+    Manage your product catalog
   </Card>
   <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
+    title="Order APIs"
+    icon="cart-shopping"
+    href="/api-reference/orders/get-details"
   >
-    Write once and reuse across your docs.
+    Process and track orders
   </Card>
-</Columns>
+  <Card
+    title="Webhooks"
+    icon="webhook"
+    href="/api-reference/webhooks"
+  >
+    Set up real-time notifications
+  </Card>
+  <Card
+    title="Rate Limits"
+    icon="gauge-high"
+    href="/api-reference/rate-limits"
+  >
+    Understand API rate limits
+  </Card>
+  <Card
+    title="Support"
+    icon="life-ring"
+    href="https://tribemade.in/dashboard"
+  >
+    Get help from our team
+  </Card>
+</CardGroup>
 
-## Need inspiration?
+## API Base URL
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+```
+https://api.tribemade.in
+```
+
+All API requests should be made to this base URL.

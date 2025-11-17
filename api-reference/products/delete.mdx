@@ -1,0 +1,547 @@
+---
+title: "Delete Product"
+api: "DELETE /api/products/{product_id}"
+description: "Permanently delete a product from your store"
+icon: "trash"
+---
+
+## Overview
+
+Permanently delete a product from your store. This action cannot be undone.
+
+<Warning>
+  **Important:** Products can only be deleted if they have no active orders. Products with orders in `processing` or `dispatched` status cannot be deleted.
+</Warning>
+
+<Info>
+  **Rate Limit:** 10 requests per minute (intentionally limited for safety)
+</Info>
+
+## Endpoint
+
+```
+DELETE https://api.tribemade.in/api/products/{product_id}
+```
+
+## Path Parameters
+
+<ParamField path="product_id" type="string" required>
+  UUID of the product to delete
+</ParamField>
+
+## Authentication
+
+<ParamField header="X-API-Key" type="string" required>
+  Your TribeMade API key (format: `tb-xxxx-xxx-xxxx`)
+</ParamField>
+
+## Response
+
+<ResponseField name="message" type="string">
+  Success message: "Product deleted successfully"
+</ResponseField>
+
+## Deletion Rules
+
+### ✅ CAN Delete
+
+Products with no orders or only completed/cancelled orders:
+
+- Products with **no orders at all**
+- Products with only **completed** orders (delivered)
+- Products with only **cancelled** orders
+- Products with mix of completed/cancelled orders
+
+### ❌ CANNOT Delete
+
+Products with active orders:
+
+- Products with **started** orders (payment received)
+- Products with **processing** orders (being prepared)
+- Products with **dispatched** orders (shipped)
+
+<Note>
+  This prevents breaking order fulfillment. Wait for active orders to complete or cancel them first.
+</Note>
+
+## Examples
+
+### Basic Delete
+
+<CodeGroup>
+
+```bash cURL
+curl -X DELETE https://api.tribemade.in/api/products/660e8400-e29b-41d4-a716-446655440123 \
+  -H "X-API-Key: tb-a1b2-c3d-e4f5"
+```
+
+```python Python
+import requests
+
+product_id = "660e8400-e29b-41d4-a716-446655440123"
+url = f"https://api.tribemade.in/api/products/{product_id}"
+headers = {
+    "X-API-Key": "tb-a1b2-c3d-e4f5"
+}
+
+response = requests.delete(url, headers=headers)
+print(response.json())
+# Output: {"message": "Product deleted successfully"}
+```
+
+```javascript Node.js
+const fetch = require('node-fetch');
+
+const productId = '660e8400-e29b-41d4-a716-446655440123';
+const url = `https://api.tribemade.in/api/products/${productId}`;
+const headers = {
+    'X-API-Key': 'tb-a1b2-c3d-e4f5'
+};
+
+fetch(url, {
+    method: 'DELETE',
+    headers: headers
+})
+.then(response => response.json())
+.then(data => console.log(data));
+// Output: {"message": "Product deleted successfully"}
+```
+
+```php PHP
+<?php
+$product_id = '660e8400-e29b-41d4-a716-446655440123';
+$url = "https://api.tribemade.in/api/products/{$product_id}";
+$headers = array(
+    'X-API-Key: tb-a1b2-c3d-e4f5'
+);
+
+$ch = curl_init($url);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+curl_close($ch);
+
+echo $response;
+// Output: {"message": "Product deleted successfully"}
+?>
+```
+
+</CodeGroup>
+
+### Success Response
+
+<CodeGroup>
+
+```json 200 OK
+{
+  "message": "Product deleted successfully"
+}
+```
+
+</CodeGroup>
+
+## Error Responses
+
+### 404 Not Found
+
+```json
+{
+  "error": "Product not found or does not belong to this store"
+}
+```
+
+**Causes:**
+- Product ID doesn't exist
+- Product belongs to a different store
+- Product was already deleted
+
+**Fix:** Verify the product ID is correct and belongs to your store.
+
+### 400 Bad Request - Has Active Orders
+
+```json
+{
+  "error": "Cannot delete product with active orders in processing or dispatched status. Please wait for orders to complete or cancel them first."
+}
+```
+
+**Cause:** Product has orders in active states (started, processing, or dispatched).
+
+**Why:** Deleting products with active orders would break order fulfillment and customer experience.
+
+**Solution Options:**
+
+1. **Wait for orders to complete** - Orders will naturally progress to delivered status
+2. **Cancel the orders** - Use [Update Order Status](/api-reference/orders/update-status) API to cancel orders
+3. **Deactivate instead** - Use [Edit Product](/api-reference/products/edit) to set `is_active: false` to hide the product
+
+<Tip>
+  Consider deactivating products (`is_active: false`) instead of deleting if you want to preserve product history.
+</Tip>
+
+### 401 Unauthorized
+
+```json
+{
+  "error": "Invalid API key"
+}
+```
+
+or
+
+```json
+{
+  "error": "Missing API key"
+}
+```
+
+### 429 Too Many Requests
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "retry_after": 60
+}
+```
+
+## Safe Deletion Workflow
+
+### Step 1: Check for Active Orders
+
+Before deleting, check if the product has active orders:
+
+```python
+import requests
+
+def can_delete_product(product_id):
+    """
+    Check if a product can be safely deleted
+    Returns: (can_delete: bool, reason: str)
+    """
+    # In a real implementation, you'd query your order database
+    # or use a hypothetical "Get Product Orders" endpoint
+    
+    # For now, just attempt deletion and handle the error
+    url = f"https://api.tribemade.in/api/products/{product_id}"
+    headers = {"X-API-Key": "tb-a1b2-c3d-e4f5"}
+    
+    response = requests.delete(url, headers=headers)
+    
+    if response.status_code == 200:
+        return True, "Product deleted successfully"
+    elif response.status_code == 400:
+        error = response.json()['error']
+        if 'active orders' in error:
+            return False, "Has active orders"
+    elif response.status_code == 404:
+        return False, "Product not found"
+    
+    return False, "Unknown error"
+
+# Usage
+can_delete, reason = can_delete_product("660e8400-...")
+print(f"Can delete: {can_delete}, Reason: {reason}")
+```
+
+### Step 2: Deactivate Instead
+
+If deletion fails due to active orders, deactivate the product instead:
+
+```python
+import requests
+
+def delete_or_deactivate_product(product_id):
+    """
+    Try to delete product, deactivate if deletion fails
+    """
+    base_url = "https://api.tribemade.in/api/products"
+    headers = {
+        "X-API-Key": "tb-a1b2-c3d-e4f5",
+        "Content-Type": "application/json"
+    }
+    
+    # Try to delete
+    delete_url = f"{base_url}/{product_id}"
+    response = requests.delete(delete_url, headers=headers)
+    
+    if response.status_code == 200:
+        print(f"✓ Product {product_id} deleted successfully")
+        return "deleted"
+    
+    elif response.status_code == 400:
+        error = response.json()['error']
+        if 'active orders' in error:
+            # Deactivate instead
+            edit_url = f"{base_url}/{product_id}/edit"
+            data = {
+                "is_active": False,
+                "internal_note": "Marked for deletion - has active orders"
+            }
+            
+            edit_response = requests.put(edit_url, headers=headers, json=data)
+            if edit_response.status_code == 200:
+                print(f"⚠ Product {product_id} has active orders - deactivated instead")
+                return "deactivated"
+    
+    print(f"✗ Failed to delete or deactivate product {product_id}")
+    return "failed"
+
+# Usage
+result = delete_or_deactivate_product("660e8400-...")
+```
+
+## Bulk Deletion
+
+Delete multiple products with proper error handling:
+
+```python
+import requests
+import time
+
+def bulk_delete_products(product_ids):
+    """
+    Delete multiple products with safety checks
+    
+    Returns: {
+        "deleted": [...],
+        "deactivated": [...],
+        "failed": [...]
+    }
+    """
+    base_url = "https://api.tribemade.in/api/products"
+    headers = {
+        "X-API-Key": "tb-a1b2-c3d-e4f5",
+        "Content-Type": "application/json"
+    }
+    
+    results = {
+        "deleted": [],
+        "deactivated": [],
+        "failed": []
+    }
+    
+    for i, product_id in enumerate(product_ids):
+        # Try to delete
+        delete_url = f"{base_url}/{product_id}"
+        response = requests.delete(delete_url, headers=headers)
+        
+        if response.status_code == 200:
+            results["deleted"].append(product_id)
+            print(f"✓ Deleted: {product_id}")
+        
+        elif response.status_code == 400:
+            error = response.json()['error']
+            if 'active orders' in error:
+                # Deactivate instead
+                edit_url = f"{base_url}/{product_id}/edit"
+                data = {"is_active": False}
+                
+                edit_response = requests.put(edit_url, headers=headers, json=data)
+                if edit_response.status_code == 200:
+                    results["deactivated"].append(product_id)
+                    print(f"⚠ Deactivated (has orders): {product_id}")
+                else:
+                    results["failed"].append(product_id)
+                    print(f"✗ Failed: {product_id}")
+        
+        elif response.status_code == 404:
+            print(f"⚠ Not found: {product_id}")
+            results["failed"].append(product_id)
+        
+        else:
+            results["failed"].append(product_id)
+            print(f"✗ Error: {product_id}")
+        
+        # Respect rate limit (10 req/min for delete)
+        # Process ~8 per minute to be safe
+        if (i + 1) % 8 == 0 and i + 1 < len(product_ids):
+            print("Waiting 60s for rate limit...")
+            time.sleep(60)
+        else:
+            time.sleep(7)  # ~8-9 requests per minute
+    
+    return results
+
+# Usage
+product_ids = [
+    "660e8400-e29b-41d4-a716-446655440123",
+    "770e8400-e29b-41d4-a716-446655440124",
+    "880e8400-e29b-41d4-a716-446655440125"
+]
+
+results = bulk_delete_products(product_ids)
+print(f"\nSummary:")
+print(f"Deleted: {len(results['deleted'])}")
+print(f"Deactivated: {len(results['deactivated'])}")
+print(f"Failed: {len(results['failed'])}")
+```
+
+## Alternative: Deactivate Instead of Delete
+
+In most cases, it's better to deactivate products rather than delete them:
+
+### Why Deactivate?
+
+<AccordionGroup>
+  <Accordion icon="clock-rotate-left" title="Preserve History">
+    - Maintains order references
+    - Keeps sales data for analytics
+    - Can be reactivated anytime
+  </Accordion>
+  
+  <Accordion icon="chart-line" title="Maintain Analytics">
+    - Historical sales data remains intact
+    - Revenue reports stay accurate
+    - Customer order history preserved
+  </Accordion>
+  
+  <Accordion icon="rotate" title="Easy Reactivation">
+    - Seasonal products can be easily reactivated
+    - No need to recreate product data
+    - Images and details remain intact
+  </Accordion>
+  
+  <Accordion icon="shield" title="Safer Operation">
+    - No risk of accidentally deleting important products
+    - Can't delete products with active orders
+    - Reversible action
+  </Accordion>
+</AccordionGroup>
+
+### How to Deactivate
+
+Use the [Edit Product](/api-reference/products/edit) API:
+
+```python
+import requests
+
+def deactivate_product(product_id, reason=""):
+    """
+    Deactivate a product instead of deleting
+    """
+    url = f"https://api.tribemade.in/api/products/{product_id}/edit"
+    headers = {
+        "X-API-Key": "tb-a1b2-c3d-e4f5",
+        "Content-Type": "application/json"
+    }
+    
+    data = {
+        "is_active": False,
+        "internal_note": f"Deactivated: {reason}" if reason else "Deactivated"
+    }
+    
+    response = requests.put(url, headers=headers, json=data)
+    
+    if response.status_code == 200:
+        print(f"✓ Product {product_id} deactivated")
+        return True
+    else:
+        print(f"✗ Failed to deactivate {product_id}")
+        return False
+
+# Usage
+deactivate_product(
+    "660e8400-...",
+    reason="Out of stock, waiting for supplier"
+)
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion icon="circle-question" title="Consider deactivation first">
+    Before deleting, ask yourself:
+    - Will I need this product again? (seasonal items)
+    - Does it have order history I want to preserve?
+    - Am I just temporarily out of stock?
+    
+    If yes to any, use deactivation instead of deletion.
+  </Accordion>
+  
+  <Accordion icon="gauge-low" title="Respect the lower rate limit">
+    Delete endpoint is limited to **10 requests per minute** (vs 20 for other operations):
+    - Process ~8 products per minute to be safe
+    - Add delays between deletion requests
+    - This is intentional for safety
+  </Accordion>
+  
+  <Accordion icon="shield-check" title="Always handle errors gracefully">
+    Products with active orders can't be deleted:
+    - Implement fallback to deactivation
+    - Log products that couldn't be deleted
+    - Retry later or manually handle edge cases
+  </Accordion>
+  
+  <Accordion icon="floppy-disk" title="Keep deletion logs">
+    Track all deletion operations:
+    - Product ID and name
+    - Deletion timestamp
+    - Success/failure status
+    - Reason for deletion
+    
+    Useful for audit trails and debugging.
+  </Accordion>
+  
+  <Accordion icon="triangle-exclamation" title="Deletion is permanent">
+    Once deleted:
+    - Product data cannot be recovered
+    - Must recreate from scratch if needed
+    - All product details, images, and metadata are lost
+    
+    Consider exporting product data before bulk deletions.
+  </Accordion>
+</AccordionGroup>
+
+## When to Actually Delete
+
+Delete products when:
+
+- ✅ Product was created by mistake
+- ✅ Duplicate products that need cleanup
+- ✅ Test products from development
+- ✅ Products with no orders and never will be sold again
+- ✅ Old products that have been replaced and all orders are completed
+
+Don't delete when:
+
+- ❌ Product is temporarily out of stock (deactivate instead)
+- ❌ Seasonal products (deactivate and reactivate later)
+- ❌ Products with active orders
+- ❌ Products with valuable sales history
+- ❌ You might want to resell similar products later
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Edit Product"
+    icon="pen-to-square"
+    href="/api-reference/products/edit"
+  >
+    Deactivate products instead of deleting
+  </Card>
+  <Card
+    title="Create Product"
+    icon="plus"
+    href="/api-reference/products/create"
+  >
+    Create new products
+  </Card>
+  <Card
+    title="Order APIs"
+    icon="truck"
+    href="/api-reference/orders/get-details"
+  >
+    Manage orders programmatically
+  </Card>
+  <Card
+    title="Rate Limits"
+    icon="gauge-high"
+    href="/api-reference/rate-limits"
+  >
+    Understand deletion rate limits
+  </Card>
+</CardGroup>
+

@@ -1,0 +1,330 @@
+---
+title: "Authentication"
+description: "Learn how to authenticate your API requests with TribeMade"
+icon: "shield-halved"
+---
+
+## API Base URL
+
+```
+https://api.tribemade.in
+```
+
+All API requests should be made to this base URL. Append the endpoint path to make requests.
+
+## How Authentication Works
+
+TribeMade API uses **API key authentication** via the `X-API-Key` header. All API requests must include your API key to authenticate.
+
+<Note>
+  API keys are **store-specific**. Each store has its own unique API key, and the key only works for that store's data.
+</Note>
+
+## Getting Your API Key
+
+<Steps>
+  <Step title="Log in to your dashboard">
+    Visit [TribeMade Dashboard](https://tribemade.in/dashboard) and select your store.
+  </Step>
+  <Step title="Navigate to Developer section">
+    Click on **Developer** in the sidebar (below Settings).
+  </Step>
+  <Step title="Generate API key">
+    Click **"Generate API Key"** to create your key. It will be displayed immediately.
+  </Step>
+  <Step title="Store securely">
+    Copy your API key and store it securely. You'll need it for all API requests.
+  </Step>
+</Steps>
+
+## API Key Format
+
+Your API key follows this pattern:
+
+```
+tb-xxxx-xxx-xxxx
+```
+
+**Example:** `tb-a1b2-c3d-e4f5`
+
+- **Length:** 16 characters
+- **Prefix:** Always starts with `tb-`
+- **Scope:** Store-specific
+
+## Using Your API Key
+
+Include your API key in the `X-API-Key` header for every API request.
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.tribemade.in/api/orders/770e8400-e29b-41d4-a716-446655440789 \
+  -H "X-API-Key: tb-a1b2-c3d-e4f5"
+```
+
+```python Python
+import requests
+
+headers = {
+    "X-API-Key": "tb-a1b2-c3d-e4f5"
+}
+
+response = requests.get(
+    "https://api.tribemade.in/api/orders/770e8400-e29b-41d4-a716-446655440789",
+    headers=headers
+)
+```
+
+```javascript Node.js
+const fetch = require('node-fetch');
+
+const headers = {
+    'X-API-Key': 'tb-a1b2-c3d-e4f5'
+};
+
+fetch('https://api.tribemade.in/api/orders/770e8400-e29b-41d4-a716-446655440789', {
+    headers: headers
+})
+.then(response => response.json())
+.then(data => console.log(data));
+```
+
+```php PHP
+<?php
+$ch = curl_init();
+
+curl_setopt($ch, CURLOPT_URL, 
+    'https://api.tribemade.in/api/orders/770e8400-e29b-41d4-a716-446655440789');
+curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+    'X-API-Key: tb-a1b2-c3d-e4f5'
+));
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+curl_close($ch);
+
+echo $response;
+?>
+```
+
+</CodeGroup>
+
+## Authentication Errors
+
+### 401 Unauthorized - Missing API Key
+
+```json
+{
+  "error": "Missing API key"
+}
+```
+
+**Cause:** You forgot to include the `X-API-Key` header in your request.
+
+**Fix:** Add the header with your API key:
+
+```bash
+-H "X-API-Key: tb-a1b2-c3d-e4f5"
+```
+
+### 401 Unauthorized - Invalid API Key
+
+```json
+{
+  "error": "Invalid API key"
+}
+```
+
+**Causes:**
+- The API key is incorrect or has been regenerated
+- The API key belongs to a different store
+- The API key format is invalid
+
+**Fix:** Generate a new API key from your dashboard and update your code.
+
+## Security Best Practices
+
+<AccordionGroup>
+  <Accordion icon="lock" title="Never expose API keys publicly">
+    **Don't:**
+    - Commit API keys to Git/GitHub
+    - Include API keys in client-side JavaScript
+    - Share API keys in public forums or chat
+    - Hardcode API keys in your source code
+    
+    **Do:**
+    - Store API keys in environment variables
+    - Use server-side code only
+    - Keep API keys in secure vaults (AWS Secrets Manager, etc.)
+  </Accordion>
+  
+  <Accordion icon="rotate" title="Regenerate compromised keys immediately">
+    If your API key is exposed or compromised:
+    1. Go to Developer section in your dashboard
+    2. Generate a new API key immediately
+    3. Update your application with the new key
+    4. The old key will stop working instantly
+  </Accordion>
+  
+  <Accordion icon="server" title="Use environment variables">
+    Store your API key in environment variables:
+    
+    ```bash .env
+    TRIBEMADE_API_KEY=tb-a1b2-c3d-e4f5
+    ```
+    
+    Then access it in your code:
+    
+    ```python Python
+    import os
+    api_key = os.environ.get('TRIBEMADE_API_KEY')
+    ```
+    
+    ```javascript Node.js
+    const apiKey = process.env.TRIBEMADE_API_KEY;
+    ```
+  </Accordion>
+  
+  <Accordion icon="eye-slash" title="Never log API keys">
+    Avoid logging API keys in:
+    - Application logs
+    - Error messages
+    - Debug output
+    - Monitoring dashboards
+    
+    Mask or redact API keys in logs:
+    ```
+    API Key: tb-****-***-****
+    ```
+  </Accordion>
+  
+  <Accordion icon="network-wired" title="Use HTTPS only">
+    Always use HTTPS when making API requests. Never use HTTP - it transmits your API key in plain text.
+    
+    ✅ **Correct:** `https://api.tribemade.in`  
+    ❌ **Wrong:** `http://api.tribemade.in`
+  </Accordion>
+</AccordionGroup>
+
+## Scope and Permissions
+
+Your API key has **full access** to:
+
+- ✅ Create, edit, and delete products
+- ✅ View order details
+- ✅ Update order statuses
+- ✅ All data for your specific store
+
+Your API key **cannot**:
+
+- ❌ Access other stores' data
+- ❌ Modify store settings
+- ❌ Create or delete store
+- ❌ Manage team members
+
+<Warning>
+  Anyone with your API key can manage your products and orders. Treat it like a password and keep it secure!
+</Warning>
+
+## Example: Secure Implementation
+
+Here's an example of a secure API key implementation:
+
+<CodeGroup>
+
+```python Python (Flask)
+import os
+import requests
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+# Load API key from environment variable
+API_KEY = os.environ.get('TRIBEMADE_API_KEY')
+BASE_URL = 'https://api.tribemade.in'
+
+def get_order(order_id):
+    headers = {'X-API-Key': API_KEY}
+    response = requests.get(
+        f'{BASE_URL}/api/orders/{order_id}',
+        headers=headers
+    )
+    return response.json()
+
+@app.route('/orders/<order_id>')
+def fetch_order(order_id):
+    try:
+        order = get_order(order_id)
+        return jsonify(order)
+    except Exception as e:
+        # Don't expose API key in errors
+        return jsonify({'error': 'Failed to fetch order'}), 500
+```
+
+```javascript Node.js (Express)
+const express = require('express');
+const fetch = require('node-fetch');
+
+const app = express();
+
+// Load API key from environment variable
+const API_KEY = process.env.TRIBEMADE_API_KEY;
+const BASE_URL = 'https://api.tribemade.in';
+
+async function getOrder(orderId) {
+    const headers = {'X-API-Key': API_KEY};
+    const response = await fetch(
+        `${BASE_URL}/api/orders/${orderId}`,
+        { headers }
+    );
+    return response.json();
+}
+
+app.get('/orders/:orderId', async (req, res) => {
+    try {
+        const order = await getOrder(req.params.orderId);
+        res.json(order);
+    } catch (error) {
+        // Don't expose API key in errors
+        res.status(500).json({ error: 'Failed to fetch order' });
+    }
+});
+
+app.listen(3000);
+```
+
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Product APIs"
+    icon="box"
+    href="/api-reference/products/create"
+  >
+    Start managing products programmatically
+  </Card>
+  <Card
+    title="Order APIs"
+    icon="truck"
+    href="/api-reference/orders/get-details"
+  >
+    Fetch and update order information
+  </Card>
+  <Card
+    title="Webhooks"
+    icon="bell"
+    href="/api-reference/webhooks"
+  >
+    Receive real-time order notifications
+  </Card>
+  <Card
+    title="Rate Limits"
+    icon="gauge-high"
+    href="/api-reference/rate-limits"
+  >
+    Understand API rate limits
+  </Card>
+</CardGroup>
+

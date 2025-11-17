@@ -1,0 +1,492 @@
+---
+title: "Error Handling"
+description: "Understanding API errors and how to handle them"
+icon: "triangle-exclamation"
+---
+
+## HTTP Status Codes
+
+TribeMade API uses standard HTTP status codes to indicate success or failure of requests.
+
+| Status Code | Meaning | Description |
+|-------------|---------|-------------|
+| `200` | Success | Request completed successfully (GET, PUT, DELETE) |
+| `201` | Created | Resource created successfully (POST) |
+| `400` | Bad Request | Invalid request parameters or validation error |
+| `401` | Unauthorized | Missing or invalid API key |
+| `403` | Forbidden | Valid API key but insufficient permissions |
+| `404` | Not Found | Resource doesn't exist |
+| `429` | Too Many Requests | Rate limit exceeded |
+| `500` | Internal Server Error | Server error (rare) |
+
+## Error Response Format
+
+All errors follow a consistent JSON format:
+
+```json
+{
+  "error": "Error message describing what went wrong"
+}
+```
+
+Some errors include additional context:
+
+```json
+{
+  "error": "All categories must be in store categories",
+  "invalid": ["InvalidCategory"]
+}
+```
+
+## Common Errors by Category
+
+### Authentication Errors (401)
+
+<AccordionGroup>
+  <Accordion icon="key" title="Missing API key">
+    **Error:**
+    ```json
+    { "error": "Missing API key" }
+    ```
+    
+    **Cause:** The `X-API-Key` header was not included in the request.
+    
+    **Fix:**
+    ```bash
+    curl https://api.tribemade.in/api/orders/123 \
+      -H "X-API-Key: tb-a1b2-c3d-e4f5"  # Add this header
+    ```
+  </Accordion>
+  
+  <Accordion icon="lock" title="Invalid API key">
+    **Error:**
+    ```json
+    { "error": "Invalid API key" }
+    ```
+    
+    **Causes:**
+    - API key is incorrect
+    - API key has been regenerated
+    - API key format is invalid
+    
+    **Fix:** Generate a new API key from your [dashboard](https://tribemade.in/dashboard).
+  </Accordion>
+</AccordionGroup>
+
+### Validation Errors (400)
+
+<AccordionGroup>
+  <Accordion icon="circle-xmark" title="Missing required fields">
+    **Error:**
+    ```json
+    { "error": "name, price, description, and stock are required" }
+    ```
+    
+    **Cause:** Required fields are missing from the request body.
+    
+    **Fix:**
+    ```json
+    {
+      "name": "Product Name",      // Required
+      "price": 499,                // Required
+      "description": "Description", // Required
+      "stock": 50                  // Required
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="ruler" title="Invalid field length">
+    **Error:**
+    ```json
+    { "error": "Name must be between 3 and 30 characters" }
+    ```
+    
+    **Cause:** Field value doesn't meet length requirements.
+    
+    **Fix:** Adjust the field value to meet the constraints:
+    - `name`: 3-30 characters
+    - `description`: 0-500 characters
+    - `short_description`: 0-50 characters
+    - `internal_note`: 0-500 characters
+  </Accordion>
+  
+  <Accordion icon="calculator" title="Invalid number value">
+    **Error:**
+    ```json
+    { "error": "price must be > 0" }
+    ```
+    
+    **Causes:**
+    - Negative or zero price
+    - Negative stock
+    - Negative shipping cost
+    
+    **Fix:**
+    ```json
+    {
+      "price": 499,        // Must be > 0
+      "current_price": 399, // Must be >= 0
+      "stock": 50,         // Must be >= 0
+      "shipping_cost": 50  // Must be >= 0
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="list" title="Array size exceeded">
+    **Error:**
+    ```json
+    { "error": "Maximum 10 images allowed" }
+    ```
+    
+    **Cause:** Array exceeds maximum allowed items.
+    
+    **Limits:**
+    - `images`: Maximum 10
+    - `variations`: Maximum 20
+    - `size`: Maximum 20
+    - `colors`: Maximum 20
+    - `categories`: Maximum 20
+    - `custom_questions`: Maximum 5
+    
+    **Fix:** Reduce array size to within limits.
+  </Accordion>
+  
+  <Accordion icon="tags" title="Invalid categories">
+    **Error:**
+    ```json
+    {
+      "error": "All categories must be in store categories",
+      "invalid": ["Electronics"]
+    }
+    ```
+    
+    **Cause:** Specified categories don't exist in your store.
+    
+    **Fix:** 
+    1. Create categories in your dashboard first
+    2. Use exact category names (case-sensitive)
+    3. Only use categories that exist in your store
+  </Accordion>
+  
+  <Accordion icon="file" title="Image too large">
+    **Error:**
+    ```json
+    { "error": "Primary image base64 size must be <= 5MB" }
+    ```
+    
+    **Cause:** Image file size exceeds 5MB limit.
+    
+    **Fix:**
+    - Compress images before uploading
+    - Use image URLs instead of base64
+    - Each image must be ≤ 5MB
+  </Accordion>
+  
+  <Accordion icon="question" title="Invalid custom question type">
+    **Error:**
+    ```json
+    { "error": "custom_questions[0].type must be 'text' or 'image'" }
+    ```
+    
+    **Cause:** Custom question type is invalid.
+    
+    **Fix:**
+    ```json
+    {
+      "custom_questions": [
+        {
+          "question": "Your question here",
+          "type": "text"  // Must be "text" or "image"
+        }
+      ]
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Resource Errors (404, 403)
+
+<AccordionGroup>
+  <Accordion icon="magnifying-glass" title="Product not found">
+    **Error:**
+    ```json
+    { "error": "Product not found or does not belong to this store" }
+    ```
+    
+    **Causes:**
+    - Product ID doesn't exist
+    - Product belongs to different store
+    - Product was already deleted
+    
+    **Fix:** Verify the product ID and ensure it belongs to your store.
+  </Accordion>
+  
+  <Accordion icon="receipt" title="Order not found">
+    **Error:**
+    ```json
+    { "error": "Order not found" }
+    ```
+    
+    **Cause:** Order ID doesn't exist.
+    
+    **Fix:** Verify the order ID is correct.
+  </Accordion>
+  
+  <Accordion icon="ban" title="Order access denied">
+    **Error:**
+    ```json
+    { "error": "Order does not belong to this store" }
+    ```
+    
+    **Cause:** Order exists but belongs to a different store.
+    
+    **Fix:** Ensure you're using the correct API key for the store that owns this order.
+  </Accordion>
+</AccordionGroup>
+
+### Business Logic Errors (400)
+
+<AccordionGroup>
+  <Accordion icon="trash" title="Cannot delete product">
+    **Error:**
+    ```json
+    {
+      "error": "Cannot delete product with active orders in processing or dispatched status. Please wait for orders to complete or cancel them first."
+    }
+    ```
+    
+    **Cause:** Product has active orders (processing or dispatched status).
+    
+    **Why:** Deleting products with active orders would break order fulfillment.
+    
+    **Fix:**
+    - Wait for orders to complete (delivered)
+    - Or cancel the orders first
+    - You can delete products with only completed/cancelled orders
+  </Accordion>
+  
+  <Accordion icon="circle-stop" title="Cannot update order status">
+    **Error:**
+    ```json
+    { "error": "Cannot update order status. Order is already delivered." }
+    ```
+    
+    **Cause:** Trying to update status of a completed order.
+    
+    **Why:** Orders in final states (delivered/cancelled) cannot be changed.
+    
+    **Fix:** Order status is final once delivered or cancelled.
+  </Accordion>
+  
+  <Accordion icon="circle-question" title="Invalid order status">
+    **Error:**
+    ```json
+    { "error": "Status must be one of: processing, dispatched, cancelled, delivered" }
+    ```
+    
+    **Cause:** Invalid status value provided.
+    
+    **Fix:** Use only these statuses:
+    - `processing`
+    - `dispatched`
+    - `cancelled`
+    - `delivered`
+  </Accordion>
+  
+  <Accordion icon="file-excel" title="No fields to update">
+    **Error:**
+    ```json
+    { "error": "No valid fields to update" }
+    ```
+    
+    **Cause:** Edit product request has no fields to update.
+    
+    **Fix:** Include at least one field to update:
+    ```json
+    {
+      "current_price": 799,
+      "stock": 200
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Rate Limit Errors (429)
+
+<Accordion icon="gauge-high" title="Rate limit exceeded">
+  **Error:**
+  ```json
+  {
+    "error": "Rate limit exceeded",
+    "retry_after": 60
+  }
+  ```
+  
+  **Cause:** You've exceeded the rate limit for this endpoint.
+  
+  **Fix:** Wait for `retry_after` seconds before making another request.
+  
+  **Prevention:** See [Rate Limits](/api-reference/rate-limits) for best practices.
+</Accordion>
+
+## Error Handling Best Practices
+
+### 1. Always Check Status Codes
+
+<CodeGroup>
+
+```python Python
+response = requests.post(url, headers=headers, json=data)
+
+if response.status_code == 201:
+    print("Success:", response.json())
+elif response.status_code == 400:
+    print("Validation error:", response.json()['error'])
+elif response.status_code == 401:
+    print("Authentication failed:", response.json()['error'])
+elif response.status_code == 429:
+    retry_after = response.json().get('retry_after', 60)
+    print(f"Rate limited. Retry after {retry_after}s")
+else:
+    print(f"Unexpected error: {response.status_code}")
+```
+
+```javascript Node.js
+const response = await fetch(url, {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify(data)
+});
+
+if (response.status === 201) {
+    const result = await response.json();
+    console.log('Success:', result);
+} else if (response.status === 400) {
+    const error = await response.json();
+    console.log('Validation error:', error.error);
+} else if (response.status === 401) {
+    const error = await response.json();
+    console.log('Authentication failed:', error.error);
+} else if (response.status === 429) {
+    const error = await response.json();
+    console.log(`Rate limited. Retry after ${error.retry_after}s`);
+} else {
+    console.log(`Unexpected error: ${response.status}`);
+}
+```
+
+</CodeGroup>
+
+### 2. Implement Retry Logic
+
+```python
+import time
+import requests
+
+def make_request_with_retry(url, headers, data, max_retries=3):
+    for attempt in range(max_retries):
+        response = requests.post(url, headers=headers, json=data)
+        
+        # Success
+        if response.status_code in [200, 201]:
+            return response.json()
+        
+        # Rate limit - wait and retry
+        if response.status_code == 429:
+            retry_after = response.json().get('retry_after', 60)
+            print(f"Rate limited. Waiting {retry_after}s...")
+            time.sleep(retry_after)
+            continue
+        
+        # Authentication error - don't retry
+        if response.status_code == 401:
+            raise Exception("Authentication failed: " + response.json()['error'])
+        
+        # Validation error - don't retry
+        if response.status_code == 400:
+            raise Exception("Validation failed: " + response.json()['error'])
+        
+        # Server error - retry with backoff
+        if response.status_code == 500:
+            wait_time = 2 ** attempt  # Exponential backoff
+            print(f"Server error. Retrying in {wait_time}s...")
+            time.sleep(wait_time)
+            continue
+        
+        # Other errors
+        raise Exception(f"Request failed: {response.status_code}")
+    
+    raise Exception("Max retries exceeded")
+```
+
+### 3. Log Errors for Debugging
+
+```python
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+try:
+    response = requests.post(url, headers=headers, json=data)
+    response.raise_for_status()
+    logger.info(f"Product created: {response.json()['product_id']}")
+except requests.exceptions.HTTPError as e:
+    error_data = e.response.json()
+    logger.error(f"API Error [{e.response.status_code}]: {error_data['error']}")
+    # Don't log the API key!
+except Exception as e:
+    logger.error(f"Unexpected error: {str(e)}")
+```
+
+### 4. Provide User-Friendly Messages
+
+```javascript
+async function createProduct(productData) {
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(productData)
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            
+            // Map technical errors to user-friendly messages
+            const userMessages = {
+                'Missing API key': 'Configuration error. Please contact support.',
+                'Invalid API key': 'Authentication failed. Please check your settings.',
+                'Name must be between 3 and 30 characters': 'Product name must be 3-30 characters long.',
+                'Rate limit exceeded': 'Too many requests. Please try again in a moment.'
+            };
+            
+            const message = userMessages[error.error] || error.error;
+            throw new Error(message);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Failed to create product:', error.message);
+        throw error;
+    }
+}
+```
+
+## Need Help?
+
+If you encounter errors not covered here or need assistance:
+
+1. Check the error message for specific guidance
+2. Verify your API key is correct and active
+3. Review the [API Reference](/api-reference/products/create) for parameter requirements
+4. Contact support through your [TribeMade Dashboard](https://tribemade.in/dashboard)
+
+<Note>
+  When contacting support, include:
+  - Error message and status code
+  - Endpoint you're calling
+  - Request parameters (without sensitive data)
+  - Timestamp of the error
+</Note>
+

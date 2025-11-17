@@ -1,0 +1,646 @@
+---
+title: "Create Product"
+api: "POST /api/products/create"
+description: "Create a new product in your store"
+icon: "plus"
+---
+
+## Overview
+
+Create a new product in your store using API key authentication. Perfect for bulk imports or automated product creation from your inventory system.
+
+<Info>
+  **Rate Limit:** 20 requests per minute
+</Info>
+
+## Endpoint
+
+```
+POST https://api.tribemade.in/api/products/create
+```
+
+## Authentication
+
+<ParamField header="X-API-Key" type="string" required>
+  Your TribeMade API key (format: `tb-xxxx-xxx-xxxx`)
+</ParamField>
+
+## Request Body
+
+### Required Fields
+
+<ParamField body="name" type="string" required>
+  Product name (3-30 characters)
+</ParamField>
+
+<ParamField body="price" type="number" required>
+  Original/MRP price in INR (must be > 0)
+</ParamField>
+
+<ParamField body="description" type="string" required>
+  Detailed product description (0-500 characters)
+</ParamField>
+
+<ParamField body="stock" type="integer" required>
+  Available quantity (must be >= 0)
+</ParamField>
+
+### Optional Fields
+
+<ParamField body="current_price" type="number" default="price">
+  Sale price in INR (must be >= 0). Defaults to the original price if not provided.
+</ParamField>
+
+<ParamField body="short_description" type="string" default="First 100 chars of description">
+  Short description for listings (0-50 characters)
+</ParamField>
+
+<ParamField body="shipping_cost" type="number" default={0}>
+  Shipping cost in INR (must be >= 0)
+</ParamField>
+
+<ParamField body="primary_image" type="string">
+  Primary product image URL or base64 encoded image (max 5MB)
+</ParamField>
+
+<ParamField body="images" type="array" default={[]}>
+  Additional product images (max 10 images, each max 5MB)
+</ParamField>
+
+<ParamField body="variations" type="array" default={[]}>
+  Product variations (max 20 items). Example: ["Regular Fit", "Slim Fit"]
+</ParamField>
+
+<ParamField body="size" type="array" default={[]}>
+  Available sizes (max 20 items). Example: ["S", "M", "L", "XL"]
+</ParamField>
+
+<ParamField body="colors" type="array" default={[]}>
+  Available colors (max 20 items). Example: ["White", "Black", "Navy Blue"]
+</ParamField>
+
+<ParamField body="categories" type="array" default={[]}>
+  Product categories (max 20, must exist in your store). Create categories in your dashboard first.
+</ParamField>
+
+<ParamField body="is_sale" type="boolean" default={false}>
+  Mark product as on sale
+</ParamField>
+
+<ParamField body="is_active" type="boolean" default={true}>
+  Product visibility to customers
+</ParamField>
+
+<ParamField body="custom_questions" type="array" default={[]}>
+  Custom questions for customers (max 5 questions). Each question must have:
+  - `question`: Question text (1-200 characters)
+  - `type`: Either "text" or "image"
+</ParamField>
+
+<ParamField body="internal_note" type="string" default="">
+  Private seller-only notes (0-500 characters). Not visible to customers.
+</ParamField>
+
+<ParamField body="metadata" type="object" default={{}}>
+  Custom key-value pairs for additional product information
+</ParamField>
+
+## Response
+
+<ResponseField name="product_id" type="string">
+  UUID of the newly created product
+</ResponseField>
+
+## Examples
+
+### Minimal Example
+
+Create a basic product with only required fields:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.tribemade.in/api/products/create \
+  -H "X-API-Key: tb-a1b2-c3d-e4f5" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Simple T-Shirt",
+    "price": 499,
+    "description": "Basic cotton t-shirt",
+    "stock": 50
+  }'
+```
+
+```python Python
+import requests
+
+url = "https://api.tribemade.in/api/products/create"
+headers = {
+    "X-API-Key": "tb-a1b2-c3d-e4f5",
+    "Content-Type": "application/json"
+}
+
+data = {
+    "name": "Simple T-Shirt",
+    "price": 499,
+    "description": "Basic cotton t-shirt",
+    "stock": 50
+}
+
+response = requests.post(url, headers=headers, json=data)
+print(response.json())
+# Output: {"product_id": "660e8400-e29b-41d4-a716-446655440123"}
+```
+
+```javascript Node.js
+const fetch = require('node-fetch');
+
+const url = 'https://api.tribemade.in/api/products/create';
+const headers = {
+    'X-API-Key': 'tb-a1b2-c3d-e4f5',
+    'Content-Type': 'application/json'
+};
+
+const data = {
+    name: 'Simple T-Shirt',
+    price: 499,
+    description: 'Basic cotton t-shirt',
+    stock: 50
+};
+
+fetch(url, {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify(data)
+})
+.then(response => response.json())
+.then(data => console.log(data));
+// Output: {"product_id": "660e8400-e29b-41d4-a716-446655440123"}
+```
+
+```php PHP
+<?php
+$url = 'https://api.tribemade.in/api/products/create';
+$headers = array(
+    'X-API-Key: tb-a1b2-c3d-e4f5',
+    'Content-Type: application/json'
+);
+
+$data = array(
+    'name' => 'Simple T-Shirt',
+    'price' => 499,
+    'description' => 'Basic cotton t-shirt',
+    'stock' => 50
+);
+
+$ch = curl_init($url);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+curl_close($ch);
+
+echo $response;
+// Output: {"product_id": "660e8400-e29b-41d4-a716-446655440123"}
+?>
+```
+
+</CodeGroup>
+
+### Success Response
+
+<CodeGroup>
+
+```json 201 Created
+{
+  "product_id": "660e8400-e29b-41d4-a716-446655440123"
+}
+```
+
+</CodeGroup>
+
+### Full Example with All Options
+
+Create a product with all available fields:
+
+<CodeGroup>
+
+```json Request Body
+{
+  "name": "Premium Cotton T-Shirt",
+  "price": 1299,
+  "current_price": 999,
+  "description": "High-quality 100% cotton t-shirt with premium finish and comfortable fit",
+  "short_description": "Premium cotton tee",
+  "stock": 100,
+  "shipping_cost": 50,
+  "primary_image": "https://cdn.example.com/tshirt.jpg",
+  "images": [
+    "https://cdn.example.com/tshirt-2.jpg",
+    "https://cdn.example.com/tshirt-3.jpg"
+  ],
+  "variations": ["Regular Fit", "Slim Fit"],
+  "size": ["S", "M", "L", "XL", "XXL"],
+  "colors": ["White", "Black", "Navy Blue"],
+  "categories": ["Fashion", "Men's Wear"],
+  "is_sale": true,
+  "is_active": true,
+  "custom_questions": [
+    {
+      "question": "Do you want your name printed?",
+      "type": "text"
+    },
+    {
+      "question": "Upload your design",
+      "type": "image"
+    }
+  ],
+  "internal_note": "Supplier: ABC Corp, Cost: ₹500, MOQ: 50, Lead time: 3 days",
+  "metadata": {
+    "material": "100% Cotton",
+    "care": "Machine wash cold",
+    "origin": "India"
+  }
+}
+```
+
+```python Python
+import requests
+
+url = "https://api.tribemade.in/api/products/create"
+headers = {
+    "X-API-Key": "tb-a1b2-c3d-e4f5",
+    "Content-Type": "application/json"
+}
+
+data = {
+    "name": "Premium Cotton T-Shirt",
+    "price": 1299,
+    "current_price": 999,
+    "description": "High-quality 100% cotton t-shirt with premium finish",
+    "short_description": "Premium cotton tee",
+    "stock": 100,
+    "shipping_cost": 50,
+    "primary_image": "https://cdn.example.com/tshirt.jpg",
+    "images": ["https://cdn.example.com/tshirt-2.jpg"],
+    "variations": ["Regular Fit", "Slim Fit"],
+    "size": ["S", "M", "L", "XL", "XXL"],
+    "colors": ["White", "Black", "Navy Blue"],
+    "categories": ["Fashion", "Men's Wear"],
+    "is_sale": True,
+    "is_active": True,
+    "custom_questions": [
+        {
+            "question": "Do you want your name printed?",
+            "type": "text"
+        }
+    ],
+    "internal_note": "Supplier: ABC Corp, Cost: ₹500",
+    "metadata": {
+        "material": "100% Cotton",
+        "care": "Machine wash cold"
+    }
+}
+
+response = requests.post(url, headers=headers, json=data)
+print(response.json())
+```
+
+</CodeGroup>
+
+## Error Responses
+
+### 400 Bad Request - Missing Required Fields
+
+```json
+{
+  "error": "name, price, description, and stock are required"
+}
+```
+
+### 400 Bad Request - Invalid Name Length
+
+```json
+{
+  "error": "Name must be between 3 and 30 characters"
+}
+```
+
+### 400 Bad Request - Invalid Price
+
+```json
+{
+  "error": "price must be > 0"
+}
+```
+
+### 400 Bad Request - Invalid Description
+
+```json
+{
+  "error": "Description must be between 0 and 500 characters"
+}
+```
+
+### 400 Bad Request - Invalid Stock
+
+```json
+{
+  "error": "stock must be >= 0"
+}
+```
+
+### 400 Bad Request - Invalid Short Description
+
+```json
+{
+  "error": "short_description must be between 0 and 50 characters"
+}
+```
+
+### 400 Bad Request - Invalid Categories
+
+```json
+{
+  "error": "All categories must be in store categories",
+  "invalid": ["InvalidCategory"]
+}
+```
+
+<Warning>
+  Categories must be created in your store first via the Dashboard. Use exact category names (case-sensitive).
+</Warning>
+
+### 400 Bad Request - Too Many Images
+
+```json
+{
+  "error": "Maximum 10 images allowed"
+}
+```
+
+### 400 Bad Request - Image Too Large
+
+```json
+{
+  "error": "Primary image base64 size must be <= 5MB"
+}
+```
+
+### 400 Bad Request - Too Many Array Items
+
+```json
+{
+  "error": "variations cannot have more than 20 items"
+}
+```
+
+<Note>
+  This error also applies to: `size`, `colors`, `categories` arrays (max 20 items each)
+</Note>
+
+### 400 Bad Request - Too Many Custom Questions
+
+```json
+{
+  "error": "Maximum 5 custom questions allowed"
+}
+```
+
+### 400 Bad Request - Invalid Custom Question Type
+
+```json
+{
+  "error": "custom_questions[0].type must be 'text' or 'image'"
+}
+```
+
+### 401 Unauthorized
+
+```json
+{
+  "error": "Missing API key"
+}
+```
+
+or
+
+```json
+{
+  "error": "Invalid API key"
+}
+```
+
+### 429 Too Many Requests
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "retry_after": 60
+}
+```
+
+## Custom Questions
+
+Custom questions allow you to collect additional information from customers during checkout.
+
+### Question Format
+
+```json
+{
+  "question": "Your question text here (1-200 characters)",
+  "type": "text"  // or "image"
+}
+```
+
+### Question Types
+
+| Type | Description | Customer Input |
+|------|-------------|----------------|
+| `text` | Text question | Customer provides text answer |
+| `image` | Image upload | Customer uploads an image |
+
+### Examples
+
+```json
+{
+  "custom_questions": [
+    {
+      "question": "Do you want your name printed?",
+      "type": "text"
+    },
+    {
+      "question": "Upload your design for customization",
+      "type": "image"
+    },
+    {
+      "question": "Any special instructions?",
+      "type": "text"
+    }
+  ]
+}
+```
+
+## Internal Notes
+
+Use `internal_note` to store private information visible only to you:
+
+```json
+{
+  "internal_note": "Supplier: ABC Corp, Cost: ₹500, MOQ: 50, Lead time: 3 days, Contact: supplier@example.com"
+}
+```
+
+**Common uses:**
+- Supplier information
+- Cost price and margins
+- Minimum order quantities
+- Lead times
+- Internal SKU codes
+- Warehouse locations
+
+<Info>
+  Internal notes are **never shown to customers** - they're only visible in your dashboard and API responses.
+</Info>
+
+## Bulk Import Example
+
+Import multiple products efficiently:
+
+```python
+import requests
+import time
+
+url = "https://api.tribemade.in/api/products/create"
+headers = {
+    "X-API-Key": "tb-a1b2-c3d-e4f5",
+    "Content-Type": "application/json"
+}
+
+products = [
+    {
+        "name": "Product 1",
+        "price": 499,
+        "description": "Description 1",
+        "stock": 50
+    },
+    {
+        "name": "Product 2",
+        "price": 699,
+        "description": "Description 2",
+        "stock": 30
+    },
+    # ... more products
+]
+
+# Import in batches to respect rate limits (20 req/min)
+batch_size = 15
+for i in range(0, len(products), batch_size):
+    batch = products[i:i + batch_size]
+    
+    for product in batch:
+        try:
+            response = requests.post(url, headers=headers, json=product)
+            if response.status_code == 201:
+                result = response.json()
+                print(f"Created: {product['name']} -> {result['product_id']}")
+            else:
+                print(f"Failed: {product['name']} -> {response.json()['error']}")
+        except Exception as e:
+            print(f"Error: {product['name']} -> {str(e)}")
+    
+    # Wait before next batch to avoid rate limit
+    if i + batch_size < len(products):
+        print(f"Batch complete. Waiting 60s...")
+        time.sleep(60)
+
+print("Import complete!")
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion icon="check" title="Validate data before sending">
+    Validate all fields client-side before making API requests to reduce errors:
+    - Check name length (3-30 characters)
+    - Ensure price > 0
+    - Verify categories exist in your store
+    - Confirm image sizes ≤ 5MB
+  </Accordion>
+  
+  <Accordion icon="image" title="Use image URLs when possible">
+    Instead of base64-encoding images, host them on a CDN and provide URLs:
+    
+    **✅ Recommended:**
+    ```json
+    {
+      "primary_image": "https://cdn.example.com/product.jpg"
+    }
+    ```
+    
+    **❌ Less efficient:**
+    ```json
+    {
+      "primary_image": "data:image/jpeg;base64,/9j/4AAQSkZJRg..."
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="list" title="Keep arrays within limits">
+    Maximum limits for arrays:
+    - Images: 10
+    - Variations, sizes, colors, categories: 20 each
+    - Custom questions: 5
+  </Accordion>
+  
+  <Accordion icon="gauge" title="Respect rate limits">
+    - Maximum 20 requests per minute
+    - For bulk imports, batch requests with 60-second pauses
+    - See [Rate Limits](/api-reference/rate-limits) for details
+  </Accordion>
+  
+  <Accordion icon="note-sticky" title="Use internal notes effectively">
+    Store useful internal information:
+    - Supplier details and contact info
+    - Cost price and profit margins
+    - SKU codes and barcodes
+    - Warehouse locations
+    - Reorder information
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Edit Product"
+    icon="pen-to-square"
+    href="/api-reference/products/edit"
+  >
+    Update existing product details
+  </Card>
+  <Card
+    title="Delete Product"
+    icon="trash"
+    href="/api-reference/products/delete"
+  >
+    Remove products from your store
+  </Card>
+  <Card
+    title="Order APIs"
+    icon="truck"
+    href="/api-reference/orders/get-details"
+  >
+    Manage orders programmatically
+  </Card>
+  <Card
+    title="Rate Limits"
+    icon="gauge-high"
+    href="/api-reference/rate-limits"
+  >
+    Understand API rate limits
+  </Card>
+</CardGroup>
+

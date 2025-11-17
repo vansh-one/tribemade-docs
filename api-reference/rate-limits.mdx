@@ -1,0 +1,325 @@
+---
+title: "Rate Limits"
+description: "Understand API rate limits and best practices"
+icon: "gauge-high"
+---
+
+## Rate Limits Overview
+
+To ensure fair usage and system stability, TribeMade API implements rate limits on all endpoints. Rate limits are applied **per API key** (per store).
+
+<Info>
+  Rate limits reset every minute. If you exceed the limit, you'll receive a `429 Too Many Requests` error.
+</Info>
+
+## Rate Limits by Endpoint
+
+| Endpoint | Rate Limit | Reset Time |
+|----------|------------|------------|
+| **Product APIs** | | |
+| `POST /api/products/create` | 20 requests/min | 60 seconds |
+| `PUT /api/products/<id>/edit` | 20 requests/min | 60 seconds |
+| `DELETE /api/products/<id>` | 10 requests/min | 60 seconds |
+| **Order APIs** | | |
+| `GET /api/orders/<id>` | 50 requests/min | 60 seconds |
+| `PUT /api/orders/<id>/status` | 20 requests/min | 60 seconds |
+
+## Rate Limit Headers
+
+Every API response includes rate limit information in the headers:
+
+```http
+X-RateLimit-Limit: 20
+X-RateLimit-Remaining: 15
+X-RateLimit-Reset: 1700123456
+```
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Maximum requests allowed per minute |
+| `X-RateLimit-Remaining` | Number of requests remaining in current window |
+| `X-RateLimit-Reset` | Unix timestamp when the rate limit resets |
+
+## Rate Limit Exceeded Error
+
+When you exceed the rate limit, you'll receive a `429` status code:
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "retry_after": 60
+}
+```
+
+The `retry_after` field tells you how many seconds to wait before making another request.
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion icon="clock" title="Implement exponential backoff">
+    When you receive a `429` error, wait before retrying. Implement exponential backoff:
+    
+    ```python Python
+    import time
+    import requests
+    
+    def make_request_with_retry(url, headers, max_retries=3):
+        for attempt in range(max_retries):
+            response = requests.get(url, headers=headers)
+            
+            if response.status_code == 429:
+                retry_after = response.json().get('retry_after', 60)
+                wait_time = retry_after * (2 ** attempt)  # Exponential backoff
+                print(f"Rate limited. Waiting {wait_time}s...")
+                time.sleep(wait_time)
+                continue
+            
+            return response
+        
+        raise Exception("Max retries exceeded")
+    ```
+  </Accordion>
+  
+  <Accordion icon="arrows-rotate" title="Monitor rate limit headers">
+    Check the `X-RateLimit-Remaining` header to avoid hitting the limit:
+    
+    ```javascript Node.js
+    const response = await fetch(url, { headers });
+    
+    const remaining = response.headers.get('X-RateLimit-Remaining');
+    const reset = response.headers.get('X-RateLimit-Reset');
+    
+    if (remaining < 5) {
+        console.warn(`Only ${remaining} requests remaining`);
+        // Slow down or wait until reset
+    }
+    ```
+  </Accordion>
+  
+  <Accordion icon="layer-group" title="Batch operations when possible">
+    Instead of making multiple individual requests, batch your operations:
+    
+    **❌ Bad: Multiple requests**
+    ```python
+    for product in products:
+        create_product(product)  # 100 requests for 100 products
+    ```
+    
+    **✅ Good: Spaced requests**
+    ```python
+    import time
+    
+    for i, product in enumerate(products):
+        create_product(product)
+        
+        # Space out requests to stay within rate limit
+        if (i + 1) % 15 == 0:  # 15 requests per batch
+            time.sleep(60)  # Wait 1 minute
+    ```
+  </Accordion>
+  
+  <Accordion icon="gauge" title="Use appropriate endpoints">
+    Choose the right endpoint for your use case:
+    
+    - Use `GET /api/orders/<id>` (50 req/min) for fetching orders instead of polling
+    - Set up webhooks for real-time notifications instead of constant polling
+    - Use `DELETE` endpoint (10 req/min) sparingly - it's intentionally limited
+  </Accordion>
+  
+  <Accordion icon="bell" title="Use webhooks instead of polling">
+    Instead of polling for new orders, use webhooks:
+    
+    **❌ Bad: Polling every minute**
+    ```python
+    while True:
+        check_for_new_orders()  # 1440 requests per day
+        time.sleep(60)
+    ```
+    
+    **✅ Good: Webhook notifications**
+    ```python
+    @app.route('/webhook', methods=['POST'])
+    def handle_order():
+        order = request.json
+        process_order(order)  # 0 API requests needed
+        return '', 200
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Handling Rate Limits in Code
+
+### Python Example
+
+```python
+import time
+import requests
+
+class TribeMadeAPI:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.base_url = 'https://api.tribemade.in'
+        self.headers = {'X-API-Key': api_key}
+    
+    def request(self, method, endpoint, **kwargs):
+        url = f'{self.base_url}{endpoint}'
+        
+        while True:
+            response = requests.request(
+                method, url, 
+                headers=self.headers, 
+                **kwargs
+            )
+            
+            # Check for rate limit
+            if response.status_code == 429:
+                retry_after = response.json().get('retry_after', 60)
+                print(f'Rate limited. Retrying after {retry_after}s...')
+                time.sleep(retry_after)
+                continue
+            
+            # Check remaining requests
+            remaining = int(response.headers.get('X-RateLimit-Remaining', 0))
+            if remaining < 5:
+                print(f'Warning: Only {remaining} requests remaining')
+            
+            return response
+    
+    def create_product(self, product_data):
+        return self.request('POST', '/api/products/create', json=product_data)
+
+# Usage
+api = TribeMadeAPI('tb-a1b2-c3d-e4f5')
+response = api.create_product({
+    'name': 'T-Shirt',
+    'price': 499,
+    'description': 'Cotton t-shirt',
+    'stock': 50
+})
+```
+
+### Node.js Example
+
+```javascript
+const fetch = require('node-fetch');
+
+class TribeMadeAPI {
+    constructor(apiKey) {
+        this.apiKey = apiKey;
+        this.baseUrl = 'https://api.tribemade.in';
+    }
+    
+    async request(method, endpoint, body = null) {
+        const url = `${this.baseUrl}${endpoint}`;
+        const headers = {
+            'X-API-Key': this.apiKey,
+            'Content-Type': 'application/json'
+        };
+        
+        while (true) {
+            const response = await fetch(url, {
+                method,
+                headers,
+                body: body ? JSON.stringify(body) : null
+            });
+            
+            // Check for rate limit
+            if (response.status === 429) {
+                const data = await response.json();
+                const retryAfter = data.retry_after || 60;
+                console.log(`Rate limited. Retrying after ${retryAfter}s...`);
+                await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+                continue;
+            }
+            
+            // Check remaining requests
+            const remaining = response.headers.get('X-RateLimit-Remaining');
+            if (remaining && parseInt(remaining) < 5) {
+                console.warn(`Warning: Only ${remaining} requests remaining`);
+            }
+            
+            return response;
+        }
+    }
+    
+    async createProduct(productData) {
+        return this.request('POST', '/api/products/create', productData);
+    }
+}
+
+// Usage
+const api = new TribeMadeAPI('tb-a1b2-c3d-e4f5');
+const response = await api.createProduct({
+    name: 'T-Shirt',
+    price: 499,
+    description: 'Cotton t-shirt',
+    stock: 50
+});
+```
+
+## Rate Limit Scenarios
+
+### Scenario 1: Bulk Product Import
+
+You need to import 100 products:
+
+```python
+import time
+
+products = [...] # 100 products
+batch_size = 15  # Stay under 20 req/min limit
+wait_time = 60   # Wait 1 minute between batches
+
+for i in range(0, len(products), batch_size):
+    batch = products[i:i + batch_size]
+    
+    for product in batch:
+        response = create_product(product)
+        print(f'Created product: {response.json()["product_id"]}')
+    
+    if i + batch_size < len(products):
+        print(f'Batch complete. Waiting {wait_time}s...')
+        time.sleep(wait_time)
+```
+
+**Result:** 100 products imported in ~7 minutes without hitting rate limits.
+
+### Scenario 2: Order Status Updates
+
+You need to update 50 order statuses:
+
+```python
+orders = [...] # 50 orders to update
+batch_size = 18  # Stay under 20 req/min limit
+
+for i in range(0, len(orders), batch_size):
+    batch = orders[i:i + batch_size]
+    
+    for order in batch:
+        update_order_status(order['id'], 'dispatched', order['tracking_url'])
+    
+    if i + batch_size < len(orders):
+        time.sleep(60)
+```
+
+**Result:** 50 orders updated in ~3 minutes safely.
+
+## Need Higher Limits?
+
+If your use case requires higher rate limits, contact us through your [TribeMade Dashboard](https://tribemade.in/dashboard) with:
+
+- Your store name and API key (first 8 characters)
+- Current rate limits causing issues
+- Desired rate limits
+- Use case description
+
+We'll review your request and may increase limits for legitimate business needs.
+
+<Note>
+  Higher rate limits are typically granted for:
+  - High-volume stores with proven track record
+  - Automated inventory sync systems
+  - Integration with major shipping providers
+  - Custom enterprise solutions
+</Note>
+
