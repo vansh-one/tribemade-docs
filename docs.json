@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "TribeMade API",
   "colors": {
-    "primary": "#FF6B35",
-    "light": "#FF8C61",
-    "dark": "#E55A2B"
+    "primary": "#9333EA",
+    "light": "#A855F7",
+    "dark": "#7E22CE"
   },
   "favicon": "/favicon.svg",
   "navigation": {
@@ -23,6 +23,8 @@
           {
             "group": "Core Concepts",
             "pages": [
+              "api-reference/api-overview",
+              "api-reference/quick-reference",
               "api-reference/authentication",
               "api-reference/rate-limits",
               "api-reference/errors"

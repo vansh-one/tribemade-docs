@@ -1,0 +1,472 @@
+---
+title: "API Overview"
+description: "Complete overview of TribeMade API capabilities and structure"
+icon: "book"
+---
+
+## Introduction
+
+**TribeMade** is a zero-cost e-commerce platform that lets you launch your online store in minutes. Unlike traditional platforms that charge monthly fees ($29-$299), TribeMade is completely free to start - we only take a flat 10% fee on successful deliveries, which includes hosting, domain, payment gateway, and **full API access**.
+
+### API at No Extra Cost
+
+Every TribeMade store comes with complete API access at no additional charge. Whether you're on your first sale or your thousandth, you get:
+
+- **Full REST API** - Create, update, delete products; manage orders programmatically
+- **Real-time Webhooks** - Get instant notifications when orders are placed
+- **No API Fees** - API access is included in our 10% flat fee (no usage limits)
+- **Complete Control** - Automate everything from inventory to order fulfillment
+
+This is especially powerful compared to Shopify, where API access and webhooks come with their $29-$299/month plans.
+
+## TribeMade API Capabilities
+
+TribeMade API provides a comprehensive REST API for managing your e-commerce store programmatically. Build powerful integrations, automate workflows, and create custom solutions.
+
+## Base URL
+
+```
+https://api.tribemade.in
+```
+
+All API requests must use this base URL.
+
+## API Capabilities
+
+### 📦 Product Management
+
+Create, update, and delete products programmatically:
+
+- **Create Product** - Add new products with complete details
+- **Edit Product** - Update any product field including prices, stock, images
+- **Delete Product** - Remove products (with safety checks for active orders)
+
+**Features:**
+- Support for variations, sizes, colors
+- Multiple images (up to 10 per product)
+- Custom questions for customer input
+- Categories and metadata
+- Internal notes (seller-only)
+- Stock management
+- Sale pricing
+
+### 🛍️ Order Management
+
+Fetch and update order information:
+
+- **Get Order Details** - Retrieve complete order information
+- **Update Order Status** - Change status and add tracking
+
+**Order Status Flow:**
+```
+started → processing → dispatched → delivered
+            ↘ cancelled (from any status)
+```
+
+**Features:**
+- Complete customer information
+- Delivery address details
+- Order items with variations
+- Special instructions
+- Custom question responses
+- Customer ratings and reviews
+- Tracking URLs
+
+### 🔔 Real-time Webhooks
+
+Receive instant notifications:
+
+- **order.created** - New order placed
+- Push notifications to your server
+- No polling required
+- Up to 5 webhook URLs
+
+## Authentication
+
+All API endpoints require authentication using API keys.
+
+### API Key Format
+
+```
+tb-xxxx-xxx-xxxx
+```
+
+**Example:** `tb-a1b2-c3d-e4f5`
+
+### How to Authenticate
+
+Include your API key in the `X-API-Key` header:
+
+```bash
+curl https://api.tribemade.in/api/orders/ORDER_ID \
+  -H "X-API-Key: tb-a1b2-c3d-e4f5"
+```
+
+### Get Your API Key
+
+1. Log in to [TribeMade Dashboard](https://tribemade.in/dashboard)
+2. Navigate to **Developer** section
+3. Click **"Generate API Key"**
+4. Copy and store securely
+
+<Warning>
+  API keys have **full access** to your store. Never expose them in client-side code or commit to version control.
+</Warning>
+
+## Rate Limits
+
+| Endpoint | Rate Limit |
+|----------|------------|
+| **Product APIs** | |
+| POST /api/products/create | 20 req/min |
+| PUT /api/products/`<id>`/edit | 20 req/min |
+| DELETE /api/products/`<id>` | 10 req/min |
+| **Order APIs** | |
+| GET /api/orders/`<id>` | 50 req/min |
+| PUT /api/orders/`<id>`/status | 20 req/min |
+
+Rate limits are per API key (per store) and reset every minute.
+
+## HTTP Status Codes
+
+| Code | Meaning | Description |
+|------|---------|-------------|
+| 200 | Success | Request completed successfully |
+| 201 | Created | Resource created successfully |
+| 400 | Bad Request | Invalid parameters or validation error |
+| 401 | Unauthorized | Missing or invalid API key |
+| 403 | Forbidden | Access denied (wrong store) |
+| 404 | Not Found | Resource doesn't exist |
+| 429 | Too Many Requests | Rate limit exceeded |
+| 500 | Internal Server Error | Server error (rare) |
+
+## Request Format
+
+### Content Type
+
+All POST and PUT requests must include:
+
+```
+Content-Type: application/json
+```
+
+### Request Body
+
+Send data as JSON:
+
+```json
+{
+  "name": "Product Name",
+  "price": 499,
+  "description": "Product description",
+  "stock": 50
+}
+```
+
+## Response Format
+
+### Success Response
+
+Successful requests return JSON:
+
+**Create operations (201):**
+```json
+{
+  "product_id": "660e8400-e29b-41d4-a716-446655440123"
+}
+```
+
+**Update/Delete operations (200):**
+```json
+{
+  "message": "Product updated successfully"
+}
+```
+
+**Get operations (200):**
+```json
+{
+  "id": "770e8400-...",
+  "status": "processing",
+  // ... full object
+}
+```
+
+### Error Response
+
+All errors return JSON with error message:
+
+```json
+{
+  "error": "Error message describing what went wrong"
+}
+```
+
+Some errors include additional context:
+
+```json
+{
+  "error": "All categories must be in store categories",
+  "invalid": ["InvalidCategory"]
+}
+```
+
+## Data Formats
+
+### Dates and Times
+
+All timestamps use **ISO 8601 format in UTC**:
+
+```
+2024-11-16T10:30:45.123456Z
+```
+
+### Currency
+
+All prices and amounts are in **Indian Rupees (INR)** as numbers:
+
+```json
+{
+  "price": 1299,
+  "current_price": 999,
+  "amount": 2048.00
+}
+```
+
+### UUIDs
+
+All IDs are UUIDs (version 4):
+
+```
+770e8400-e29b-41d4-a716-446655440789
+```
+
+### Phone Numbers
+
+Indian phone numbers as strings:
+
+```
+9876543210
+```
+
+### Pincodes
+
+Indian pincodes as strings:
+
+```
+400001
+```
+
+## Field Constraints
+
+### Product Fields
+
+| Field | Type | Min | Max | Notes |
+|-------|------|-----|-----|-------|
+| name | string | 3 chars | 30 chars | Required |
+| description | string | 0 chars | 500 chars | Required |
+| short_description | string | 0 chars | 50 chars | Optional |
+| price | number | > 0 | - | Required, INR |
+| current_price | number | >= 0 | - | Optional, INR |
+| stock | integer | >= 0 | - | Required |
+| shipping_cost | number | >= 0 | - | Optional, INR |
+| internal_note | string | 0 chars | 500 chars | Optional |
+| primary_image | string | - | 5MB | Optional, URL or base64 |
+| images | array | 0 items | 10 items | Optional, each ≤ 5MB |
+| variations | array | 0 items | 20 items | Optional |
+| size | array | 0 items | 20 items | Optional |
+| colors | array | 0 items | 20 items | Optional |
+| categories | array | 0 items | 20 items | Must exist in store |
+| custom_questions | array | 0 items | 5 items | Optional |
+
+### Custom Question Format
+
+```json
+{
+  "question": "Question text (1-200 characters)",
+  "type": "text"  // or "image"
+}
+```
+
+**Types:**
+- `text` - Customer provides text answer
+- `image` - Customer uploads image
+
+### Order Status Values
+
+| Status | Description | Can Change To |
+|--------|-------------|---------------|
+| started | Payment received | processing, cancelled |
+| processing | Being prepared | dispatched, cancelled |
+| dispatched | Shipped | delivered, cancelled |
+| delivered | Delivered (final) | - |
+| cancelled | Cancelled (final) | - |
+
+## Best Practices
+
+### 1. Use Environment Variables
+
+Never hardcode API keys:
+
+```python
+import os
+api_key = os.environ.get('TRIBEMADE_API_KEY')
+```
+
+### 2. Use Webhooks, Not Polling
+
+**❌ Don't poll for new orders:**
+```python
+while True:
+    check_for_orders()  # Wastes API calls
+    time.sleep(60)
+```
+
+**✅ Use webhooks:**
+```python
+@app.route('/webhook', methods=['POST'])
+def handle_order():
+    process_order(request.json)
+    return '', 200
+```
+
+### 3. Respect Rate Limits
+
+- Implement exponential backoff
+- Monitor `X-RateLimit-Remaining` header
+- Space out bulk operations
+- Handle 429 errors gracefully
+
+### 4. Handle Errors Properly
+
+- Check HTTP status codes
+- Parse error messages
+- Implement retry logic for 500 errors
+- Don't retry 400/401/403/404 errors
+
+### 5. Validate Before Sending
+
+- Check field lengths
+- Validate data types
+- Ensure categories exist
+- Compress images to ≤ 5MB
+
+## Quick Start Checklist
+
+- [ ] Get API key from dashboard
+- [ ] Store API key in environment variable
+- [ ] Test authentication with a GET request
+- [ ] Create a test product
+- [ ] Set up webhook endpoint (optional)
+- [ ] Configure webhook URL in dashboard
+- [ ] Test webhook with real order
+- [ ] Implement error handling
+- [ ] Add retry logic for failures
+- [ ] Monitor API usage and errors
+
+## Support and Resources
+
+### Documentation
+
+- [Authentication](/api-reference/authentication) - API key setup and security
+- [Rate Limits](/api-reference/rate-limits) - Detailed rate limit information
+- [Error Handling](/api-reference/errors) - Complete error reference
+- [Products](/api-reference/products/create) - Product management APIs
+- [Orders](/api-reference/orders/get-details) - Order management APIs
+- [Webhooks](/api-reference/webhooks) - Real-time notifications
+
+### Need Help?
+
+- **Dashboard:** [https://tribemade.in/dashboard](https://tribemade.in/dashboard)
+- **API Base URL:** `https://api.tribemade.in`
+- **Support:** Contact through your dashboard
+
+## API Versioning
+
+Current version: **v1**
+
+All endpoints are currently at version 1. Future versions will be documented here.
+
+## Security
+
+### What TribeMade Does
+
+- ✅ All API traffic over HTTPS
+- ✅ API keys are hashed in database
+- ✅ Rate limiting to prevent abuse
+- ✅ Input validation on all fields
+- ✅ Authentication on all endpoints
+
+### What You Should Do
+
+- ✅ Store API keys securely
+- ✅ Use HTTPS for webhooks
+- ✅ Validate webhook payloads
+- ✅ Implement proper error handling
+- ✅ Monitor for unusual activity
+- ✅ Rotate API keys if compromised
+
+<Warning>
+  **Security Best Practices:**
+  - Never commit API keys to Git
+  - Never expose API keys in client-side code
+  - Always use environment variables
+  - Regenerate keys immediately if exposed
+</Warning>
+
+## API Endpoint Summary
+
+### Products
+
+```
+POST   /api/products/create          Create new product
+PUT    /api/products/<id>/edit       Update product
+DELETE /api/products/<id>            Delete product
+```
+
+### Orders
+
+```
+GET    /api/orders/<id>              Get order details
+PUT    /api/orders/<id>/status       Update order status
+```
+
+### Webhooks
+
+```
+POST   https://your-domain.com/webhook  Receive order.created events
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Quick Start"
+    icon="rocket"
+    href="/quickstart"
+  >
+    Get started in 5 minutes
+  </Card>
+  <Card
+    title="Authentication"
+    icon="key"
+    href="/api-reference/authentication"
+  >
+    Learn about API authentication
+  </Card>
+  <Card
+    title="Create Product"
+    icon="plus"
+    href="/api-reference/products/create"
+  >
+    Start creating products
+  </Card>
+  <Card
+    title="Webhooks"
+    icon="webhook"
+    href="/api-reference/webhooks"
+  >
+    Set up real-time notifications
+  </Card>
+</CardGroup>
+

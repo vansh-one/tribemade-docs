@@ -1,0 +1,574 @@
+---
+title: "Quick Reference"
+description: "Complete API reference at a glance"
+icon: "list-check"
+---
+
+## API Base URL
+
+```
+https://api.tribemade.in
+```
+
+## Authentication
+
+**Header:** `X-API-Key: tb-xxxx-xxx-xxxx`
+
+**Example:**
+```bash
+curl https://api.tribemade.in/api/orders/ORDER_ID \
+  -H "X-API-Key: tb-a1b2-c3d-e4f5"
+```
+
+## All Endpoints
+
+### Product APIs
+
+| Method | Endpoint | Description | Rate Limit |
+|--------|----------|-------------|------------|
+| POST | `/api/products/create` | Create new product | 20/min |
+| PUT | `/api/products/<id>/edit` | Update product | 20/min |
+| DELETE | `/api/products/<id>` | Delete product | 10/min |
+
+### Order APIs
+
+| Method | Endpoint | Description | Rate Limit |
+|--------|----------|-------------|------------|
+| GET | `/api/orders/<id>` | Get order details | 50/min |
+| PUT | `/api/orders/<id>/status` | Update order status | 20/min |
+
+## Product Fields
+
+### Required Fields
+
+| Field | Type | Constraints |
+|-------|------|-------------|
+| name | string | 3-30 characters |
+| price | number | > 0 (INR) |
+| description | string | 0-500 characters |
+| stock | integer | >= 0 |
+
+### Optional Fields
+
+| Field | Type | Default | Constraints |
+|-------|------|---------|-------------|
+| current_price | number | = price | >= 0 (INR) |
+| short_description | string | First 100 chars | 0-50 characters |
+| shipping_cost | number | 0 | >= 0 (INR) |
+| primary_image | string | null | URL or base64, ≤5MB |
+| images | array | [] | Max 10, each ≤5MB |
+| variations | array | [] | Max 20 items |
+| size | array | [] | Max 20 items |
+| colors | array | [] | Max 20 items |
+| categories | array | [] | Max 20 (must exist) |
+| is_sale | boolean | false | - |
+| is_active | boolean | true | - |
+| custom_questions | array | [] | Max 5 questions |
+| internal_note | string | "" | 0-500 characters |
+| metadata | object | {} | Custom key-value pairs |
+
+## Order Status Values
+
+| Status | Description | Transition To |
+|--------|-------------|---------------|
+| started | Payment received | processing, cancelled |
+| processing | Being prepared | dispatched, cancelled |
+| dispatched | Shipped | delivered, cancelled |
+| delivered | Delivered (final) | - |
+| cancelled | Cancelled (final) | - |
+
+## HTTP Status Codes
+
+| Code | Meaning | When |
+|------|---------|------|
+| 200 | Success | GET, PUT, DELETE succeeded |
+| 201 | Created | POST succeeded |
+| 400 | Bad Request | Validation error, invalid data |
+| 401 | Unauthorized | Missing/invalid API key |
+| 403 | Forbidden | Wrong store |
+| 404 | Not Found | Resource doesn't exist |
+| 429 | Rate Limited | Too many requests |
+| 500 | Server Error | Internal error (rare) |
+
+## Common Error Responses
+
+### Authentication Errors (401)
+
+```json
+{ "error": "Missing API key" }
+{ "error": "Invalid API key" }
+```
+
+### Validation Errors (400)
+
+```json
+// Missing required fields
+{ "error": "name, price, description, and stock are required" }
+
+// Invalid field length
+{ "error": "Name must be between 3 and 30 characters" }
+
+// Invalid number value
+{ "error": "price must be > 0" }
+{ "error": "stock must be >= 0" }
+
+// Array size exceeded
+{ "error": "Maximum 10 images allowed" }
+{ "error": "variations cannot have more than 20 items" }
+
+// Invalid categories
+{
+  "error": "All categories must be in store categories",
+  "invalid": ["InvalidCategory"]
+}
+
+// Image too large
+{ "error": "Primary image base64 size must be <= 5MB" }
+
+// Too many custom questions
+{ "error": "Maximum 5 custom questions allowed" }
+
+// Invalid custom question type
+{ "error": "custom_questions[0].type must be 'text' or 'image'" }
+
+// No fields to update (edit)
+{ "error": "No valid fields to update" }
+
+// Invalid order status
+{ "error": "Status must be one of: processing, dispatched, cancelled, delivered" }
+
+// Order already completed
+{ "error": "Cannot update order status. Order is already delivered." }
+
+// Cannot delete product
+{ "error": "Cannot delete product with active orders in processing or dispatched status. Please wait for orders to complete or cancel them first." }
+```
+
+### Resource Errors (403, 404)
+
+```json
+// Product not found
+{ "error": "Product not found or does not belong to this store" }
+
+// Order not found
+{ "error": "Order not found" }
+
+// Order access denied
+{ "error": "Order does not belong to this store" }
+```
+
+### Rate Limit Error (429)
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "retry_after": 60
+}
+```
+
+## Custom Questions Format
+
+```json
+{
+  "question": "Question text (1-200 characters)",
+  "type": "text"  // or "image"
+}
+```
+
+**Types:**
+- `text` - Customer provides text answer
+- `image` - Customer uploads image file
+
+**Example:**
+```json
+{
+  "custom_questions": [
+    {
+      "question": "Do you want your name printed?",
+      "type": "text"
+    },
+    {
+      "question": "Upload your design for customization",
+      "type": "image"
+    }
+  ]
+}
+```
+
+## Webhook Payload
+
+**Event:** `order.created`  
+**Method:** POST  
+**Content-Type:** application/json
+
+### Always Present Fields
+
+```json
+{
+  "event": "order.created",
+  "order_id": "770e8400-e29b-41d4-a716-446655440789",
+  "store_id": "550e8400-e29b-41d4-a716-446655440000",
+  "product_id": "660e8400-e29b-41d4-a716-446655440123",
+  "status": "started",
+  "created_at": "2024-11-16T10:30:45.123456",
+  "customer": {
+    "name": "Rahul Sharma",
+    "email": "rahul.sharma@example.com",
+    "number": "9876543210",
+    "full_address": "123, MG Road, Apartment 4B, Mumbai, Maharashtra, India",
+    "pincode": "400001"
+  },
+  "order_details": {
+    "quantity": 2,
+    "amount": 2048.00,
+    "variation": "Slim Fit",
+    "size": "L",
+    "color": "Navy Blue",
+    "special_instructions": "Please gift wrap",
+    "custom_questions": []
+  }
+}
+```
+
+### Nullable Fields
+
+- `order_details.variation` - null if not applicable
+- `order_details.size` - null if not applicable
+- `order_details.color` - null if not applicable
+- `order_details.special_instructions` - null if none
+- `order_details.custom_questions` - empty array if none
+
+## Request Examples
+
+### Create Product (Minimal)
+
+```bash
+POST https://api.tribemade.in/api/products/create
+Content-Type: application/json
+X-API-Key: tb-a1b2-c3d-e4f5
+
+{
+  "name": "Simple T-Shirt",
+  "price": 499,
+  "description": "Basic cotton t-shirt",
+  "stock": 50
+}
+
+# Response 201:
+{
+  "product_id": "660e8400-e29b-41d4-a716-446655440123"
+}
+```
+
+### Create Product (Full)
+
+```bash
+POST https://api.tribemade.in/api/products/create
+Content-Type: application/json
+X-API-Key: tb-a1b2-c3d-e4f5
+
+{
+  "name": "Premium Cotton T-Shirt",
+  "price": 1299,
+  "current_price": 999,
+  "description": "High-quality 100% cotton t-shirt",
+  "short_description": "Premium cotton tee",
+  "stock": 100,
+  "shipping_cost": 50,
+  "primary_image": "https://cdn.example.com/tshirt.jpg",
+  "images": ["https://cdn.example.com/tshirt-2.jpg"],
+  "variations": ["Regular Fit", "Slim Fit"],
+  "size": ["S", "M", "L", "XL", "XXL"],
+  "colors": ["White", "Black", "Navy Blue"],
+  "categories": ["Fashion", "Men's Wear"],
+  "is_sale": true,
+  "is_active": true,
+  "custom_questions": [
+    {
+      "question": "Do you want your name printed?",
+      "type": "text"
+    }
+  ],
+  "internal_note": "Supplier: ABC Corp, Cost: ₹500",
+  "metadata": {
+    "material": "100% Cotton",
+    "care": "Machine wash cold"
+  }
+}
+```
+
+### Edit Product
+
+```bash
+PUT https://api.tribemade.in/api/products/660e8400-.../edit
+Content-Type: application/json
+X-API-Key: tb-a1b2-c3d-e4f5
+
+{
+  "current_price": 799,
+  "stock": 200,
+  "is_sale": true
+}
+
+# Response 200:
+{
+  "message": "Product updated successfully"
+}
+```
+
+### Delete Product
+
+```bash
+DELETE https://api.tribemade.in/api/products/660e8400-...
+X-API-Key: tb-a1b2-c3d-e4f5
+
+# Response 200:
+{
+  "message": "Product deleted successfully"
+}
+```
+
+### Get Order Details
+
+```bash
+GET https://api.tribemade.in/api/orders/770e8400-...
+X-API-Key: tb-a1b2-c3d-e4f5
+
+# Response 200:
+{
+  "id": "770e8400-e29b-41d4-a716-446655440789",
+  "created_at": "2024-11-16T10:30:00.000000Z",
+  "product_id": "660e8400-e29b-41d4-a716-446655440123",
+  "product_name": "Premium Cotton T-Shirt",
+  "product_image": "https://cdn.example.com/tshirt.jpg",
+  "status": "dispatched",
+  "customer": {
+    "name": "Rahul Sharma",
+    "email": "rahul.sharma@example.com",
+    "number": "9876543210",
+    "full_address": {
+      "line1": "123, MG Road",
+      "line2": "Apartment 4B",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "country": "India"
+    },
+    "pincode": "400001"
+  },
+  "order_details": {
+    "variation": "Slim Fit",
+    "size": "L",
+    "color": "Navy Blue",
+    "quantity": 2,
+    "amount": 2048,
+    "special_instructions": "Please gift wrap",
+    "custom_questions": []
+  },
+  "rating": 4.5,
+  "review": "Excellent quality!",
+  "tracking_url": "https://delhivery.com/track/DLVY123456"
+}
+```
+
+### Update Order Status
+
+```bash
+PUT https://api.tribemade.in/api/orders/770e8400-.../status
+Content-Type: application/json
+X-API-Key: tb-a1b2-c3d-e4f5
+
+{
+  "status": "dispatched",
+  "tracking_url": "https://delhivery.com/track/DLVY123456"
+}
+
+# Response 200:
+{
+  "message": "Order status updated successfully"
+}
+```
+
+## Product Deletion Rules
+
+### ✅ CAN Delete
+
+- Products with no orders
+- Products with only completed orders
+- Products with only cancelled orders
+- Products with mix of completed/cancelled orders
+
+### ❌ CANNOT Delete
+
+- Products with started orders
+- Products with processing orders
+- Products with dispatched orders
+
+**Alternative:** Use `is_active: false` to hide products instead of deleting.
+
+## Tracking URL Examples
+
+### Supported Couriers
+
+| Courier | URL Format |
+|---------|------------|
+| Delhivery | `https://delhivery.com/track/AWBXXXXXXXX` |
+| BlueDart | `https://bluedart.com/tracking/AWBXXXXXXXX` |
+| India Post | `https://indiapost.gov.in/track/REGXXXXXXXX` |
+| Others | Any valid HTTPS tracking URL |
+
+## Webhook Requirements
+
+### Your Endpoint Must:
+
+1. **Accept POST requests** with JSON body
+2. **Return 2xx status** (200, 201, 202)
+3. **Respond within 5 seconds**
+4. **Use HTTPS** (HTTP not accepted)
+5. **Have valid SSL certificate**
+
+### Webhook Response
+
+```python
+@app.route('/webhook/orders', methods=['POST'])
+def handle_order():
+    data = request.get_json()
+    
+    # Validate event
+    if data.get('event') != 'order.created':
+        return '', 400
+    
+    # Queue for processing
+    process_order_async(data)
+    
+    # Return success immediately
+    return '', 200
+```
+
+## Rate Limit Headers
+
+Every response includes:
+
+```
+X-RateLimit-Limit: 20
+X-RateLimit-Remaining: 15
+X-RateLimit-Reset: 1700123456
+```
+
+## Data Formats
+
+| Type | Format | Example |
+|------|--------|---------|
+| Timestamps | ISO 8601 (UTC) | `2024-11-16T10:30:45.123456Z` |
+| Currency | Number (INR) | `1299` or `999.50` |
+| UUIDs | UUID v4 | `770e8400-e29b-41d4-a716-446655440789` |
+| Phone | String | `9876543210` |
+| Pincode | String | `400001` |
+
+## Typical Order Timeline
+
+| Day | Status | Action |
+|-----|--------|--------|
+| Day 0 | started | Order placed, payment received |
+| Day 0-1 | processing | Preparation begins |
+| Day 1-2 | dispatched | Shipped with tracking |
+| Day 4-7 | delivered | Customer receives |
+
+## Best Practices Summary
+
+### ✅ Do's
+
+- Store API keys in environment variables
+- Use webhooks instead of polling
+- Implement exponential backoff for retries
+- Validate data before sending
+- Handle all error codes properly
+- Monitor rate limit headers
+- Use HTTPS for webhooks
+- Return 200 quickly from webhooks
+- Log all webhook payloads
+- Check for duplicate webhooks
+
+### ❌ Don'ts
+
+- Hardcode API keys in code
+- Commit API keys to Git
+- Expose API keys in client-side code
+- Poll for new orders repeatedly
+- Skip statuses in order flow
+- Forget tracking URL for dispatched orders
+- Update delivered/cancelled orders
+- Delete products with active orders
+- Process webhooks synchronously
+- Ignore rate limit errors
+
+## Security Checklist
+
+- [ ] API key stored in environment variable
+- [ ] API key never committed to version control
+- [ ] API key never exposed in client-side code
+- [ ] All API requests use HTTPS
+- [ ] Webhook endpoint uses HTTPS
+- [ ] Valid SSL certificate on webhook endpoint
+- [ ] Webhook payload validation implemented
+- [ ] Error handling doesn't expose API key
+- [ ] Rate limiting respected
+- [ ] Failed requests have retry logic
+
+## Support
+
+**Dashboard:** [https://tribemade.in/dashboard](https://tribemade.in/dashboard)  
+**API Base:** `https://api.tribemade.in`  
+**Documentation:** This site
+
+## Version
+
+**API Version:** v1  
+**Last Updated:** November 2024
+
+---
+
+<CardGroup cols={3}>
+  <Card
+    title="Full API Overview"
+    icon="book"
+    href="/api-reference/api-overview"
+  >
+    Complete API capabilities
+  </Card>
+  <Card
+    title="Authentication"
+    icon="key"
+    href="/api-reference/authentication"
+  >
+    API key setup guide
+  </Card>
+  <Card
+    title="Rate Limits"
+    icon="gauge-high"
+    href="/api-reference/rate-limits"
+  >
+    Detailed rate information
+  </Card>
+  <Card
+    title="Error Handling"
+    icon="triangle-exclamation"
+    href="/api-reference/errors"
+  >
+    Complete error reference
+  </Card>
+  <Card
+    title="Products"
+    icon="box"
+    href="/api-reference/products/create"
+  >
+    Product APIs
+  </Card>
+  <Card
+    title="Orders"
+    icon="truck"
+    href="/api-reference/orders/get-details"
+  >
+    Order APIs
+  </Card>
+</CardGroup>
+
