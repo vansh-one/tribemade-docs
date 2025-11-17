@@ -38,6 +38,7 @@
           {
             "group": "Product APIs",
             "pages": [
+              "api-reference/products/get-details",
               "api-reference/products/create",
               "api-reference/products/edit",
               "api-reference/products/delete"

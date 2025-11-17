@@ -1,0 +1,487 @@
+---
+title: "Get Product"
+api: "GET /api/products/{product_id}"
+description: "Retrieve complete product information"
+icon: "eye"
+---
+
+## Overview
+
+Retrieve complete product information for a specific product in your store using API key authentication. Only products belonging to your store can be accessed.
+
+<Info>
+  **Rate Limit:** 50 requests per minute
+</Info>
+
+## Endpoint
+
+```
+GET https://api.tribemade.in/api/products/{product_id}
+```
+
+## Authentication
+
+<ParamField header="X-API-Key" type="string" required>
+  Your TribeMade API key (format: `tb-xxxx-xxx-xxxx`)
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="product_id" type="string" required>
+  UUID of the product to retrieve
+</ParamField>
+
+## Request Body
+
+No request body required for GET requests.
+
+## Response
+
+<ResponseField name="id" type="string">
+  UUID of the product
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 timestamp when the product was created (UTC)
+</ResponseField>
+
+<ResponseField name="store_id" type="string">
+  UUID of the store this product belongs to
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Product name (3-30 characters)
+</ResponseField>
+
+<ResponseField name="origional_price" type="number">
+  Original/MRP price in INR
+</ResponseField>
+
+<ResponseField name="current_price" type="number">
+  Current/sale price in INR
+</ResponseField>
+
+<ResponseField name="shipping_cost" type="number">
+  Shipping cost in INR
+</ResponseField>
+
+<ResponseField name="short_description" type="string">
+  Short product description (0-50 characters)
+</ResponseField>
+
+<ResponseField name="long_description" type="string">
+  Full product description (0-500 characters)
+</ResponseField>
+
+<ResponseField name="variations" type="array">
+  Product variations (e.g., ["Regular Fit", "Slim Fit"])
+</ResponseField>
+
+<ResponseField name="size" type="array">
+  Available sizes (e.g., ["S", "M", "L", "XL"])
+</ResponseField>
+
+<ResponseField name="colors" type="array">
+  Available colors (e.g., ["Black", "White", "Navy"])
+</ResponseField>
+
+<ResponseField name="categories" type="array">
+  Product categories
+</ResponseField>
+
+<ResponseField name="is_sale" type="boolean">
+  Whether the product is marked as on sale
+</ResponseField>
+
+<ResponseField name="custom_questions" type="array">
+  Custom questions for customers. Each question contains:
+  - `question`: Question text
+  - `type`: Either "text" or "image"
+</ResponseField>
+
+<ResponseField name="is_active" type="boolean">
+  Whether the product is active and visible to customers
+</ResponseField>
+
+<ResponseField name="stock" type="integer">
+  Available quantity
+</ResponseField>
+
+<ResponseField name="internal_note" type="string">
+  Private seller-only notes (not visible to customers)
+</ResponseField>
+
+## Examples
+
+### Basic Example
+
+Retrieve a product by its ID:
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.tribemade.in/api/products/19d8f8ea-1234-5678-90ab-cdef12345678 \
+  -H "X-API-Key: tb-a1b2-c3d-e4f5"
+```
+
+```python Python
+import requests
+
+product_id = "19d8f8ea-1234-5678-90ab-cdef12345678"
+url = f"https://api.tribemade.in/api/products/{product_id}"
+headers = {
+    "X-API-Key": "tb-a1b2-c3d-e4f5"
+}
+
+response = requests.get(url, headers=headers)
+print(response.json())
+```
+
+```javascript Node.js
+const fetch = require('node-fetch');
+
+const productId = '19d8f8ea-1234-5678-90ab-cdef12345678';
+const url = `https://api.tribemade.in/api/products/${productId}`;
+const headers = {
+    'X-API-Key': 'tb-a1b2-c3d-e4f5'
+};
+
+fetch(url, {
+    method: 'GET',
+    headers: headers
+})
+.then(response => response.json())
+.then(data => console.log(data));
+```
+
+```php PHP
+<?php
+$product_id = '19d8f8ea-1234-5678-90ab-cdef12345678';
+$url = 'https://api.tribemade.in/api/products/' . $product_id;
+$headers = array(
+    'X-API-Key: tb-a1b2-c3d-e4f5'
+);
+
+$ch = curl_init($url);
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+curl_close($ch);
+
+echo $response;
+?>
+```
+
+</CodeGroup>
+
+### Success Response
+
+<CodeGroup>
+
+```json 200 OK
+{
+  "id": "19d8f8ea-1234-5678-90ab-cdef12345678",
+  "created_at": "2024-11-18T10:46:12.123456+00:00",
+  "store_id": "7b4b3e39-5678-90ab-cdef-123456789012",
+  "name": "Sample Product",
+  "origional_price": 1299.99,
+  "current_price": 999.99,
+  "shipping_cost": 49.0,
+  "short_description": "Short summary",
+  "long_description": "Full description of the product with all the details...",
+  "variations": ["Default"],
+  "size": ["M", "L"],
+  "colors": ["Black"],
+  "categories": ["apparel"],
+  "is_sale": true,
+  "custom_questions": [
+    {
+      "question": "Upload inspo",
+      "type": "image"
+    }
+  ],
+  "is_active": true,
+  "stock": 25,
+  "internal_note": "VIP drop"
+}
+```
+
+</CodeGroup>
+
+## Error Responses
+
+### 401 Unauthorized - Missing API Key
+
+```json
+{
+  "error": "Missing API key"
+}
+```
+
+### 401 Unauthorized - Invalid API Key
+
+```json
+{
+  "error": "Invalid API key"
+}
+```
+
+### 404 Not Found - Product Doesn't Exist
+
+```json
+{
+  "error": "Product not found or does not belong to this store"
+}
+```
+
+<Warning>
+  You can only access products that belong to your store. Attempting to access products from other stores will return a 404 error.
+</Warning>
+
+### 429 Too Many Requests
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "retry_after": 60
+}
+```
+
+### 500 Internal Server Error
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+
+<Note>
+  500 errors are rare and indicate an unexpected server issue. If you encounter persistent 500 errors, check the API status or contact support.
+</Note>
+
+## Use Cases
+
+<AccordionGroup>
+  <Accordion icon="sync" title="Sync inventory with external systems">
+    Retrieve product details to sync with your inventory management system:
+    
+    ```python
+    import requests
+    
+    def sync_product_to_inventory(product_id):
+        url = f"https://api.tribemade.in/api/products/{product_id}"
+        headers = {"X-API-Key": "tb-a1b2-c3d-e4f5"}
+        
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            product = response.json()
+            
+            # Sync to your inventory system
+            inventory_system.update({
+                "sku": product["id"],
+                "name": product["name"],
+                "stock": product["stock"],
+                "price": product["current_price"]
+            })
+            
+            return True
+        return False
+    ```
+  </Accordion>
+  
+  <Accordion icon="chart-line" title="Verify product details before updates">
+    Check current product state before making updates:
+    
+    ```python
+    def safe_update_stock(product_id, new_stock):
+        # First, get current product details
+        response = requests.get(
+            f"https://api.tribemade.in/api/products/{product_id}",
+            headers={"X-API-Key": "tb-a1b2-c3d-e4f5"}
+        )
+        
+        if response.status_code == 200:
+            product = response.json()
+            current_stock = product["stock"]
+            
+            # Only update if needed
+            if current_stock != new_stock:
+                # Make update call
+                update_product_stock(product_id, new_stock)
+                print(f"Updated stock from {current_stock} to {new_stock}")
+            else:
+                print("Stock already up to date")
+    ```
+  </Accordion>
+  
+  <Accordion icon="list-check" title="Audit and reporting">
+    Retrieve product data for analytics and reporting:
+    
+    ```python
+    def generate_product_report(product_ids):
+        report = []
+        
+        for product_id in product_ids:
+            response = requests.get(
+                f"https://api.tribemade.in/api/products/{product_id}",
+                headers={"X-API-Key": "tb-a1b2-c3d-e4f5"}
+            )
+            
+            if response.status_code == 200:
+                product = response.json()
+                report.append({
+                    "name": product["name"],
+                    "price": product["current_price"],
+                    "stock": product["stock"],
+                    "status": "Active" if product["is_active"] else "Inactive",
+                    "on_sale": product["is_sale"]
+                })
+        
+        return report
+    ```
+  </Accordion>
+  
+  <Accordion icon="mobile" title="Build custom mobile apps">
+    Fetch product details for custom mobile or web applications:
+    
+    ```javascript
+    async function displayProductDetails(productId) {
+      const response = await fetch(
+        `https://api.tribemade.in/api/products/${productId}`,
+        {
+          headers: {
+            'X-API-Key': 'tb-a1b2-c3d-e4f5'
+          }
+        }
+      );
+      
+      if (response.ok) {
+        const product = await response.json();
+        
+        // Display in your custom UI
+        document.getElementById('product-name').textContent = product.name;
+        document.getElementById('product-price').textContent = `₹${product.current_price}`;
+        document.getElementById('product-stock').textContent = `${product.stock} available`;
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion icon="bolt" title="Cache product data appropriately">
+    Cache product data to reduce API calls, but refresh periodically:
+    
+    ```python
+    import time
+    from functools import lru_cache
+    
+    @lru_cache(maxsize=100)
+    def get_product_cached(product_id, cache_timestamp):
+        response = requests.get(
+            f"https://api.tribemade.in/api/products/{product_id}",
+            headers={"X-API-Key": "tb-a1b2-c3d-e4f5"}
+        )
+        return response.json() if response.status_code == 200 else None
+    
+    # Use with 5-minute cache
+    current_5min = int(time.time() / 300)
+    product = get_product_cached(product_id, current_5min)
+    ```
+  </Accordion>
+  
+  <Accordion icon="shield-check" title="Handle errors gracefully">
+    Always check response status and handle errors:
+    
+    ```python
+    def get_product_safe(product_id):
+        try:
+            response = requests.get(
+                f"https://api.tribemade.in/api/products/{product_id}",
+                headers={"X-API-Key": "tb-a1b2-c3d-e4f5"},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            elif response.status_code == 404:
+                print(f"Product {product_id} not found")
+            elif response.status_code == 429:
+                print("Rate limit exceeded, try again later")
+            else:
+                print(f"Error: {response.status_code}")
+                
+        except requests.exceptions.Timeout:
+            print("Request timed out")
+        except Exception as e:
+            print(f"Error: {str(e)}")
+        
+        return None
+    ```
+  </Accordion>
+  
+  <Accordion icon="gauge" title="Respect rate limits">
+    - Maximum 50 requests per minute
+    - Implement retry logic with exponential backoff
+    - See [Rate Limits](/api-reference/rate-limits) for details
+  </Accordion>
+  
+  <Accordion icon="eye-slash" title="Protect internal notes">
+    Remember that `internal_note` contains private information:
+    - Never expose internal notes in customer-facing applications
+    - Be careful when logging or storing product data
+    - Internal notes may contain sensitive supplier or pricing information
+  </Accordion>
+</AccordionGroup>
+
+## Response Field Notes
+
+<Note>
+  **Price Fields:** Note the spelling `origional_price` in the API response (this is the field name used by the API). Both `origional_price` and `current_price` are returned as numbers representing INR.
+</Note>
+
+<Info>
+  **Store Association:** The API automatically filters products based on your API key's store. You can only retrieve products that belong to your store.
+</Info>
+
+<Warning>
+  **Internal Notes Security:** The `internal_note` field contains seller-only information. Ensure this data is never exposed to customers in any client-facing application.
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Create Product"
+    icon="plus"
+    href="/api-reference/products/create"
+  >
+    Add new products to your store
+  </Card>
+  <Card
+    title="Edit Product"
+    icon="pen-to-square"
+    href="/api-reference/products/edit"
+  >
+    Update existing product details
+  </Card>
+  <Card
+    title="Delete Product"
+    icon="trash"
+    href="/api-reference/products/delete"
+  >
+    Remove products from your store
+  </Card>
+  <Card
+    title="Rate Limits"
+    icon="gauge-high"
+    href="/api-reference/rate-limits"
+  >
+    Understand API rate limits
+  </Card>
+</CardGroup>
+
+

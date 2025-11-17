@@ -35,8 +35,9 @@ All API requests must use this base URL.
 
 ### 📦 Product Management
 
-Create, update, and delete products programmatically:
+Create, read, update, and delete products programmatically:
 
+- **Get Product** - Retrieve complete product information
 - **Create Product** - Add new products with complete details
 - **Edit Product** - Update any product field including prices, stock, images
 - **Delete Product** - Remove products (with safety checks for active orders)
@@ -118,6 +119,7 @@ curl https://api.tribemade.in/api/orders/ORDER_ID \
 | Endpoint | Rate Limit |
 |----------|------------|
 | **Product APIs** | |
+| GET /api/products/`<id>` | 50 req/min |
 | POST /api/products/create | 20 req/min |
 | PUT /api/products/`<id>`/edit | 20 req/min |
 | DELETE /api/products/`<id>` | 10 req/min |
@@ -419,6 +421,7 @@ All endpoints are currently at version 1. Future versions will be documented her
 ### Products
 
 ```
+GET    /api/products/<id>            Get product details
 POST   /api/products/create          Create new product
 PUT    /api/products/<id>/edit       Update product
 DELETE /api/products/<id>            Delete product
